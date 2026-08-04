@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kraftwerk — Idle Game</title>
+<meta name="description" content="Ein Strom-Idle-Game: klicke, baue Kraftwerke von der Handkurbel bis zum Fusionsreaktor und baue dein Netz aus.">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="page">
+
+  <header class="topbar">
+    <span class="brand">
+      <svg width="22" height="22" viewBox="0 0 256 256" fill="var(--color-accent)"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-88,120a8,8,0,0,0,3,11.69l57.63,21.61L112.16,237.43a8,8,0,0,0,13.69,7l88-120A8,8,0,0,0,215.79,118.17Z"></path></svg>
+      Kraftwerk
+    </span>
+    <span class="text-muted" style="font-size:12px">Idle-Game · Strom erzeugen</span>
+  </header>
+
+  <main class="game">
+
+    <!-- linke Spalte: Erzeugung + Stats -->
+    <section class="card elev-sm" style="gap:16px;padding:20px">
+      <div class="card elev-sm" style="padding:18px;gap:6px;align-items:center;text-align:center">
+        <span class="card-kicker">Netz-Speicher</span>
+        <span id="idle-energy" style="font-size:34px;font-family:var(--font-heading);line-height:1.1">0&nbsp;⚡</span>
+        <span class="text-muted" style="font-size:13px"><span id="idle-rate">0</span> ⚡/s</span>
+        <span class="hidden" id="idle-offline" style="font-size:12px;color:var(--color-accent)"></span>
+      </div>
+
+      <button class="btn btn-secondary elev-md" id="idle-click" style="padding:16px;font-size:16px;justify-content:center">
+        ⚡ Strom erzeugen
+        <span class="tag tag-accent" id="idle-clickgain" style="margin-left:6px">+1</span>
+      </button>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="card elev-sm" style="padding:12px;gap:2px"><span class="card-kicker" style="color:var(--color-neutral-500)">Insgesamt erzeugt</span><span style="font-size:18px;font-family:var(--font-heading)" id="idle-total">0 ⚡</span></div>
+        <div class="card elev-sm" style="padding:12px;gap:2px"><span class="card-kicker" style="color:var(--color-neutral-500)">Netz-Bonus</span><span style="font-size:18px;font-family:var(--font-heading)" id="idle-prestige-mult">×1.00</span></div>
+      </div>
+
+      <div class="hr" style="margin:2px 0"></div>
+
+      <div class="card elev-sm" style="padding:14px;gap:8px">
+        <span class="card-kicker">Netzausbau (Prestige)</span>
+        <p class="text-muted" style="font-size:12px;margin:0">Alles zurücksetzen für einen dauerhaften <strong>+2 %</strong>-Bonus je Ausbaupunkt. Punkte bleiben für immer.</p>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span class="text-muted">Bei Reset: <strong id="idle-prestige-gain" style="color:var(--color-accent)">+0</strong> Punkte</span>
+          <span class="text-muted">Gesamt: <strong id="idle-prestige-have">0</strong></span>
+        </div>
+        <button class="btn btn-secondary" id="idle-prestige" style="justify-content:center" disabled>Netz ausbauen</button>
+      </div>
+
+      <button class="btn btn-ghost" id="idle-reset" style="font-size:12px;align-self:flex-start">Spielstand löschen</button>
+    </section>
+
+    <!-- rechte Spalte: Kraftwerke + Upgrades -->
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <div class="card elev-sm" style="padding:16px;gap:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <h5 style="margin:0">Kraftwerke</h5>
+          <div class="seg" id="idle-buyamount">
+            <label class="seg-opt"><input type="radio" name="idle-buy" value="1" checked>×1</label>
+            <label class="seg-opt"><input type="radio" name="idle-buy" value="10">×10</label>
+            <label class="seg-opt"><input type="radio" name="idle-buy" value="max">Max</label>
+          </div>
+        </div>
+        <div id="idle-generators" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div class="card elev-sm" style="padding:16px;gap:12px">
+        <h5 style="margin:0">Upgrades</h5>
+        <div id="idle-upgrades" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-muted" style="text-align:center;font-size:12px;padding:24px">
+    Spielstand wird lokal im Browser gespeichert · <a href="https://github.com/giudicea/kraftwerk-idle">Quellcode auf GitHub</a>
+  </footer>
+
+</div>
+<script src="js/game.js"></script>
+</body>
+</html>

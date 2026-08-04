@@ -1,0 +1,133 @@
+/* Kraftwerk — Idle Game. Design-Tokens (Nocturne) und Komponenten,
+   abgeleitet aus der Elektro-Toolbox. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-bg: #161826;
+  --color-surface: #232532;
+  --color-text: #e9e9ed;
+  --color-accent: #9184d9;
+  --color-accent-2: #a7a1db;
+  --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
+
+  --color-neutral-100: #f3f5fe;
+  --color-neutral-500: #9397ab;
+  --color-neutral-800: #3f424d;
+
+  --color-accent-100: #f5f4ff;
+  --color-accent-300: #d2cefd;
+  --color-accent-800: #423a6a;
+
+  --font-heading: "Inter", system-ui, sans-serif;
+  --font-heading-weight: 500;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  --space-1: 2.8px;
+  --space-2: 5.6px;
+  --space-3: 8.4px;
+  --space-4: 11.2px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 0 0 1px #3f424d;
+  --shadow-md: 0 0 0 1px #595d6c, 0 6px 18px rgba(0,0,0,0.55);
+  --shadow-lg: 0 0 0 1px #9397ab, 0 16px 40px rgba(0,0,0,0.65);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); font-size: 15px; line-height: 1.55; font-weight: 400; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+}
+h5 { font-size: 16px; }
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-accent); text-underline-offset: 3px; }
+a:hover { color: var(--color-accent-300); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+.hidden { display: none !important; }
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+
+.hr { height: 1px; border: 0; margin: var(--space-4) 0;
+  background: linear-gradient(to right, transparent, var(--color-divider) 48px,
+    var(--color-divider) calc(100% - 48px), transparent); }
+
+/* — buttons — */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 14px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+}
+.btn svg { display: block; }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+
+/* — segmented control — */
+.seg { display: inline-flex; overflow: hidden; border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
+.seg-opt { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer; }
+.seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:has(input:checked) { color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+/* — cards — */
+.card { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface); }
+.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* — tags — */
+.tag { display: inline-flex; align-items: center; font-size: 11px; letter-spacing: 0.02em; padding: 3px 10px; border-radius: calc(var(--radius-md) * 0.75); }
+.tag-accent { background: var(--color-accent-800); color: var(--color-accent-100); }
+
+/* — layout — */
+.topbar { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); }
+.brand { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; display: flex; align-items: center; gap: 10px; }
+.topbar .text-muted { margin-left: auto; }
+
+.game {
+  max-width: 1080px; margin: 0 auto; padding: 28px 24px 8px;
+  display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start;
+}
+@media (max-width: 860px) { .game { grid-template-columns: 1fr; } }
+
+/* — generator / upgrade rows — */
+.idle-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+.idle-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.idle-row-title { display: flex; align-items: baseline; gap: 8px; }
+.idle-row-name { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 15px; }
+.idle-row-owned { font-size: 12px; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+.idle-row-sub { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-variant-numeric: tabular-nums; }
+.idle-buy-btn {
+  flex: 0 0 auto; min-width: 116px; display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.15;
+  padding: 8px 12px; border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+  background: var(--color-surface); cursor: pointer; color: var(--color-text);
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 13px;
+}
+.idle-buy-btn:hover:not(:disabled) { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.idle-buy-btn:active:not(:disabled) { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.idle-buy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.idle-buy-btn .cost { font-size: 12px; color: var(--color-accent-300); font-variant-numeric: tabular-nums; }
+.idle-buy-btn:disabled .cost { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.idle-locked { opacity: 0.55; filter: grayscale(0.4); }
+.idle-pulse { animation: idle-pulse 0.25s ease; }
+@keyframes idle-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
