@@ -46,10 +46,20 @@
   // ─── Web-Audio-Synthese (keine Sounddateien) ───
   const SOUND_KEY = 'kraftwerk-idle-sound';
   const HUM_KEY = 'kraftwerk-idle-hum';
+  const VOL_KEY = 'kraftwerk-idle-vol';
   let ac = null;
-  let master = null;
+  let master = null;       // Gesamtlautstärke
+  let sfxBus = null;       // Effekt-Bus (Klicks, Käufe …)
   let muted = false;
   let hum = null;          // { gain, oscs } wenn aktiv
+
+  // Lautstärke-Regler (0..1); persistent
+  const vol = { master: 0.5, sfx: 1.0, music: 0.9, hum: 0.06 };
+  try {
+    const raw = localStorage.getItem(VOL_KEY);
+    if (raw) { const s = JSON.parse(raw); ['master', 'sfx', 'music', 'hum'].forEach(k => { if (typeof s[k] === 'number') vol[k] = Math.max(0, Math.min(1, s[k])); }); }
+  } catch (e) { /* ignore */ }
+  function persistVol() { try { localStorage.setItem(VOL_KEY, JSON.stringify(vol)); } catch (e) {} }
 
   try { muted = localStorage.getItem(SOUND_KEY) === 'off'; } catch (e) { /* ignore */ }
 
@@ -59,10 +69,30 @@
     if (!AC) return null;
     ac = new AC();
     master = ac.createGain();
-    master.gain.value = 0.5;
+    master.gain.value = vol.master;
     master.connect(ac.destination);
+    sfxBus = ac.createGain();
+    sfxBus.gain.value = vol.sfx;
+    sfxBus.connect(master);
     return ac;
   }
+
+  // Live-Lautstärke setzen (name: master|sfx|music|hum)
+  function setVolume(name, v) {
+    v = Math.max(0, Math.min(1, +v || 0));
+    if (!(name in vol)) return v;
+    vol[name] = v;
+    persistVol();
+    if (ac) {
+      const t = ac.currentTime;
+      if (name === 'master' && master) master.gain.setTargetAtTime(v, t, 0.03);
+      if (name === 'sfx' && sfxBus) sfxBus.gain.setTargetAtTime(v, t, 0.03);
+      if (name === 'music' && musicBus) musicBus.gain.setTargetAtTime(v, t, 0.03);
+      if (name === 'hum' && hum) hum.g.gain.setTargetAtTime(v, t, 0.03);
+    }
+    return v;
+  }
+  function getVolumes() { return Object.assign({}, vol); }
 
   // Kurzer Ton mit Hüllkurve
   function tone(freq, dur, type, vol, slideTo) {
@@ -78,7 +108,7 @@
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol || 0.25, t0 + 0.008);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(g); g.connect(master);
+    osc.connect(g); g.connect(sfxBus);
     osc.start(t0);
     osc.stop(t0 + dur + 0.02);
   }
@@ -108,7 +138,7 @@
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(0.28, t0 + 0.05);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
-    osc.connect(g); g.connect(master);
+    osc.connect(g); g.connect(sfxBus);
     osc.start(t0); osc.stop(t0 + 0.65);
   }
   // Freischalt-Jingle (neues Kraftwerk in Reichweite)
@@ -128,7 +158,7 @@
     const g = ctx.createGain();
     g.gain.value = 0.0;
     g.connect(master);
-    g.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 1.2);
+    g.gain.linearRampToValueAtTime(vol.hum, ctx.currentTime + 1.2);
 
     const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 55;    // tiefes A
     const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = 55.4;  // Schwebung
@@ -275,7 +305,7 @@
     musicBus = ctx.createGain();
     musicBus.gain.value = 0.0;
     musicBus.connect(master);
-    musicBus.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.5);
+    musicBus.gain.linearRampToValueAtTime(vol.music, ctx.currentTime + 1.5);
     nextStep = 0; nextStepTime = ctx.currentTime + 0.1;
     musicTimer = setInterval(musicLoop, 25);
   }
@@ -303,6 +333,7 @@
     isMuted, toggleMute,
     humOn, toggleHum,
     musicOn, toggleMusic,
+    setVolume, getVolumes,
     _restoreHum() { try { return localStorage.getItem(HUM_KEY) === 'on'; } catch (e) { return false; } },
     _restoreMusic() { try { return localStorage.getItem(MUSIC_KEY) === 'on'; } catch (e) { return false; } }
   };

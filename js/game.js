@@ -53,7 +53,7 @@
   const idle = {
     energy: 0, total: 0, gens: {}, clickLevel: 0, effLevel: 0,
     prestige: 0, lastSave: Date.now(), buyAmount: '1', started: false,
-    clicks: 0, ach: []
+    clicks: 0, ach: [], speed: 1
   };
   GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
   const achSet = new Set();
@@ -268,7 +268,7 @@
     if (!window.confirm('Spielstand wirklich unwiderruflich löschen?')) return;
     idle.energy = 0; idle.total = 0; idle.clickLevel = 0; idle.effLevel = 0;
     idle.prestige = 0; idle.buyAmount = '1'; idle.started = false;
-    idle.clicks = 0; idle.ach = []; achSet.clear();
+    idle.clicks = 0; idle.ach = []; achSet.clear(); idle.speed = 1;
     GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
     const r1 = document.querySelector('input[name="idle-buy"][value="1"]');
     if (r1) r1.checked = true;
@@ -281,7 +281,7 @@
     if (!idleBuilt) return;
     const perSec = idlePerSecond();
     setText('idle-energy', idleFmt(idle.energy) + ' ⚡');
-    setText('idle-rate', idleFmt(perSec));
+    setText('idle-rate', idleFmt(perSec) + (idle.speed && idle.speed !== 1 ? ` · ×${idle.speed} Speed` : ''));
     setText('idle-total', idleFmt(idle.total) + ' ⚡');
     setText('idle-prestige-mult', '×' + idleGlobalMult().toFixed(2));
     setText('idle-clickgain', '+' + idleFmt(idleClickGain()));
@@ -366,7 +366,7 @@
         energy: idle.energy, total: idle.total, gens: idle.gens,
         clickLevel: idle.clickLevel, effLevel: idle.effLevel,
         prestige: idle.prestige, lastSave: idle.lastSave, buyAmount: idle.buyAmount,
-        clicks: idle.clicks, ach: idle.ach
+        clicks: idle.clicks, ach: idle.ach, speed: idle.speed
       }));
     } catch (e) { /* Speicher voll o. deaktiviert */ }
   }
@@ -385,6 +385,7 @@
     idle.lastSave = +s.lastSave || Date.now();
     idle.started = true;
     idle.clicks = +s.clicks || 0;
+    idle.speed = +s.speed > 0 ? Math.min(1000, +s.speed) : 1;
     if (s.gens) GENERATORS.forEach(g => { idle.gens[g.id] = Math.min(MAX_PER_GEN, +s.gens[g.id] || 0); });
     // Erfolge wiederherstellen (nur bekannte IDs)
     idle.ach = [];
@@ -423,7 +424,7 @@
   let idleAchAcc = 0;
   function idleTick(now) {
     if (!idleLast) idleLast = now;
-    const dt = Math.min(1, (now - idleLast) / 1000);
+    const dt = Math.min(1, (now - idleLast) / 1000) * (idle.speed || 1);
     idleLast = now;
     const gain = idlePerSecond() * dt;
     if (gain > 0) { idle.energy += gain; idle.total += gain; }
@@ -435,9 +436,104 @@
     requestAnimationFrame(idleTick);
   }
 
+  // ─── Cheats ───
+  const CHEATS = [
+    { codes: ['geld', 'money'],          desc: 'sehr viel Energie (+1 Trilliarde ⚡)',   run: () => { idle.energy += 1e18; return '💰 Energie aufgeladen!'; } },
+    { codes: ['reich'],                  desc: 'ordentlich Energie (+1 Mrd. ⚡)',        run: () => { idle.energy += 1e9;  return '💰 +1 Mrd. ⚡'; } },
+    { codes: ['motherlode'],             desc: 'Energie-Bonus (+1 Bio. ⚡)',             run: () => { idle.energy += 1e15; return '💰 Motherlode!'; } },
+    { codes: ['turbo'],                  desc: 'Spielgeschwindigkeit ×5',                run: () => { idle.speed = 5;  return '⏩ Speed ×5'; } },
+    { codes: ['zeitraffer'],             desc: 'Spielgeschwindigkeit ×10',               run: () => { idle.speed = 10; return '⏩ Speed ×10'; } },
+    { codes: ['hyper'],                  desc: 'Spielgeschwindigkeit ×25',               run: () => { idle.speed = 25; return '⏩ Speed ×25'; } },
+    { codes: ['langsam', 'slow'],        desc: 'Spielgeschwindigkeit ×0,25',             run: () => { idle.speed = 0.25; return '⏪ Speed ×0,25'; } },
+    { codes: ['normal', 'tempo'],        desc: 'Geschwindigkeit zurück auf ×1',          run: () => { idle.speed = 1;  return '⏱️ Normaltempo'; } },
+    { codes: ['ausbau'],                 desc: '+10 Ausbaupunkte (Netz-Bonus)',          run: () => { idle.prestige += 10; return '🔌 +10 Ausbaupunkte'; } },
+    { codes: ['vollausbau', 'maxbau'],   desc: 'alle Kraftwerke auf Maximum (500)',      run: () => { GENERATORS.forEach(g => { idle.gens[g.id] = MAX_PER_GEN; }); return '🏭 Alle Kraftwerke auf Max'; } },
+    { codes: ['freischalten', 'unlock'], desc: 'von jedem Kraftwerk mind. 1',            run: () => { GENERATORS.forEach(g => { if (idle.gens[g.id] < 1) idle.gens[g.id] = 1; }); return '🔓 Alles freigeschaltet'; } },
+    { codes: ['loeschen', 'wipe'],       desc: 'Spielstand löschen (mit Rückfrage)',     run: () => { setTimeout(idleResetSave, 60); return '🗑️ Löschen…'; } }
+  ];
+  function applyCheat(raw) {
+    const code = String(raw || '').trim().toLowerCase();
+    if (!code) return { ok: false, msg: 'Bitte einen Code eingeben.' };
+    const def = CHEATS.find(c => c.codes.includes(code));
+    if (!def) return { ok: false, msg: `Unbekannter Code: „${code}"` };
+    let m;
+    try { m = def.run(); } catch (e) { return { ok: false, msg: 'Fehler beim Ausführen.' }; }
+    idle.started = true;
+    checkAchievements(false);
+    renderIdleView();
+    saveIdle();
+    idleToast('🎮', 'Cheat aktiviert', m);
+    return { ok: true, msg: m };
+  }
+
+  // ─── Einstellungs-/Cheat-Modal ───
+  function setupSettings() {
+    const overlay = $('settings-overlay'), openBtn = $('open-settings'), closeBtn = $('settings-close');
+    if (!overlay || !openBtn) return;
+    const sliders = ['master', 'sfx', 'music', 'hum'];
+    const syncVolumeUI = () => {
+      if (!window.KraftFX || !KraftFX.getVolumes) return;
+      const v = KraftFX.getVolumes();
+      sliders.forEach(name => {
+        const el = $('vol-' + name), val = $('volval-' + name);
+        const pct = Math.round((v[name] || 0) * 100);
+        if (el) el.value = pct;
+        if (val) val.textContent = pct + '%';
+      });
+    };
+    const open = () => { overlay.classList.remove('hidden'); syncVolumeUI(); };
+    const close = () => overlay.classList.add('hidden');
+    openBtn.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close(); });
+
+    // Tabs
+    const tabSound = $('tab-sound'), tabCheats = $('tab-cheats');
+    const panelSound = $('panel-sound'), panelCheats = $('panel-cheats');
+    const showTab = (sound) => {
+      tabSound.classList.toggle('is-active', sound);
+      tabCheats.classList.toggle('is-active', !sound);
+      tabSound.setAttribute('aria-selected', String(sound));
+      tabCheats.setAttribute('aria-selected', String(!sound));
+      panelSound.classList.toggle('hidden', !sound);
+      panelCheats.classList.toggle('hidden', sound);
+    };
+    if (tabSound) tabSound.addEventListener('click', () => showTab(true));
+    if (tabCheats) tabCheats.addEventListener('click', () => showTab(false));
+
+    // Lautstärke-Regler
+    sliders.forEach(name => {
+      const el = $('vol-' + name);
+      if (!el) return;
+      el.addEventListener('input', () => {
+        const pct = parseInt(el.value, 10) || 0;
+        if (window.KraftFX && KraftFX.setVolume) KraftFX.setVolume(name, pct / 100);
+        const val = $('volval-' + name);
+        if (val) val.textContent = pct + '%';
+      });
+    });
+    syncVolumeUI();
+
+    // Cheat-Eingabe
+    const input = $('cheat-input'), applyBtn = $('cheat-apply'), msg = $('cheat-msg');
+    const doApply = () => {
+      const res = applyCheat(input ? input.value : '');
+      if (msg) { msg.textContent = res.msg; msg.className = 'cheat-msg ' + (res.ok ? 'ok' : 'bad'); }
+      if (res.ok) { if (input) input.value = ''; if (window.KraftFX) KraftFX.unlock(); }
+      else if (window.KraftFX) KraftFX.denied();
+    };
+    if (applyBtn) applyBtn.addEventListener('click', doApply);
+    if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doApply(); });
+
+    const list = $('cheat-list');
+    if (list) list.innerHTML = CHEATS.map(c => `<li><code>${c.codes[0]}</code>${c.desc}</li>`).join('');
+  }
+
   function init() {
     buildIdle();
     loadIdle();
+    setupSettings();
     $('idle-click').addEventListener('click', idleClick);
     $('idle-prestige').addEventListener('click', idleDoPrestige);
     $('idle-reset').addEventListener('click', idleResetSave);

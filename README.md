@@ -25,6 +25,11 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
   Fortschritt nicht davonläuft.
 - **18 Erfolge** — jeder freigeschaltete Erfolg gibt dauerhaft **+2 %**
   Gesamtleistung; Freischaltung wird per Toast eingeblendet
+- **Einstellungs-Menü** (⚙️) mit Tabs **Sound** & **Cheats**:
+  - Lautstärke-**Regler** für Gesamt, Effekte, Musik und Brumm (persistent)
+    plus An/Aus-Schalter
+  - **Cheat-Codes** (z. B. `geld`, `turbo`, `zeitraffer`, `langsam`, `ausbau`,
+    `vollausbau`) für Energie, Spieltempo u. v. m.
 - **Automatisches Speichern** im Browser (localStorage) inkl.
   **Offline-Gutschrift** (bis zu 12 h, „Willkommen zurück"-Toast)
 

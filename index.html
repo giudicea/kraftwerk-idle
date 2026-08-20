@@ -22,11 +22,7 @@
       Kraftwerk
     </span>
     <span class="text-muted" style="font-size:12px">Idle-Game · Strom erzeugen</span>
-    <span class="fx-toggle-group">
-      <button class="fx-toggle" id="fx-sound" aria-pressed="true" title="Soundeffekte an/aus">🔊 Sound</button>
-      <button class="fx-toggle" id="fx-music" aria-pressed="false" title="Musik an/aus">♫ Musik</button>
-      <button class="fx-toggle" id="fx-hum" aria-pressed="false" title="Strom-Brumm an/aus">〜 Brumm</button>
-    </span>
+    <button class="fx-toggle" id="open-settings" title="Einstellungen & Cheats" aria-haspopup="dialog">⚙️ Einstellungen</button>
   </header>
 
   <main class="game">
@@ -100,6 +96,49 @@
   </footer>
 
 </div>
+
+<!-- Einstellungs-/Cheat-Modal -->
+<div class="modal-overlay hidden" id="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="modal elev-lg">
+    <div class="modal-head">
+      <h5 id="settings-title" style="margin:0">Einstellungen</h5>
+      <button class="modal-close" id="settings-close" aria-label="Schließen">✕</button>
+    </div>
+    <div class="modal-tabs" role="tablist">
+      <button class="modal-tab is-active" id="tab-sound" role="tab" aria-selected="true">🔊 Sound</button>
+      <button class="modal-tab" id="tab-cheats" role="tab" aria-selected="false">🎮 Cheats</button>
+    </div>
+
+    <!-- Tab: Sound -->
+    <div class="modal-panel" id="panel-sound">
+      <div class="set-toggles">
+        <button class="fx-toggle" id="fx-sound" aria-pressed="true" title="Soundeffekte an/aus">🔊 Sound</button>
+        <button class="fx-toggle" id="fx-music" aria-pressed="false" title="Musik an/aus">♫ Musik</button>
+        <button class="fx-toggle" id="fx-hum" aria-pressed="false" title="Strom-Brumm an/aus">〜 Brumm</button>
+      </div>
+      <label class="set-row"><span>Gesamt</span><input type="range" id="vol-master" min="0" max="100" step="1"><span class="set-val" id="volval-master">50%</span></label>
+      <label class="set-row"><span>Effekte</span><input type="range" id="vol-sfx" min="0" max="100" step="1"><span class="set-val" id="volval-sfx">100%</span></label>
+      <label class="set-row"><span>Musik</span><input type="range" id="vol-music" min="0" max="100" step="1"><span class="set-val" id="volval-music">90%</span></label>
+      <label class="set-row"><span>Brumm</span><input type="range" id="vol-hum" min="0" max="100" step="1"><span class="set-val" id="volval-hum">6%</span></label>
+      <p class="text-muted" style="font-size:11px;margin:4px 0 0">Ton startet nach dem ersten Klick ins Spiel (Browser-Regel).</p>
+    </div>
+
+    <!-- Tab: Cheats -->
+    <div class="modal-panel hidden" id="panel-cheats">
+      <p class="text-muted" style="font-size:12px;margin:0 0 4px">Code eingeben und mit <strong>Enter</strong> oder „Anwenden" bestätigen:</p>
+      <div class="cheat-input-row">
+        <input type="text" id="cheat-input" placeholder="z. B. geld, turbo, langsam …" autocomplete="off" spellcheck="false">
+        <button class="btn btn-secondary" id="cheat-apply">Anwenden</button>
+      </div>
+      <div class="cheat-msg" id="cheat-msg" aria-live="polite"></div>
+      <div class="cheat-help">
+        <span class="card-kicker">Verfügbare Codes</span>
+        <ul id="cheat-list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="kraft-toasts" id="kraft-toasts" aria-live="polite" aria-atomic="false"></div>
 <script src="js/fx.js"></script>
 <script src="js/game.js"></script>
