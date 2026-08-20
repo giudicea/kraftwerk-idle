@@ -196,6 +196,25 @@ a:hover { color: var(--color-accent-300); }
 }
 @media (prefers-reduced-motion: reduce) { .fx-dot { animation: none; display: none; } }
 
+/* ─── Kraftwerks-Meilensteine (Fortschrittsbalken je Kraftwerk) ─── */
+.idle-ms { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.idle-ms-bar {
+  flex: 1 1 auto; height: 4px; min-width: 40px; border-radius: 999px; overflow: hidden;
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+.idle-ms-bar > span {
+  display: block; height: 100%; width: 0%; border-radius: 999px;
+  background: linear-gradient(to right, var(--color-accent), var(--color-accent-2));
+  transition: width 0.3s ease;
+}
+.idle-ms-txt {
+  flex: 0 0 auto; font-size: 10.5px; color: var(--color-accent);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.idle-locked .idle-ms { opacity: 0.6; }
+.idle-locked .idle-ms-bar > span { background: var(--color-neutral-500); }
+.idle-locked .idle-ms-txt { color: var(--color-neutral-500); }
+
 /* ─── Erfolge / Meilensteine ─── */
 .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .ach {

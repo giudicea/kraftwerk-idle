@@ -6,7 +6,7 @@
 
   // ─── Spieldaten ───
   const IDLE_KEY = 'kraftwerk-idle';
-  const IDLE_OFFLINE_CAP = 8 * 3600;   // max. 8 h Offline-Gutschrift
+  const IDLE_OFFLINE_CAP = 12 * 3600;  // max. 12 h Offline-Gutschrift
   const COST_GROWTH = 1.15;
   const GENERATORS = [
     { id: 'kurbel', name: 'Handkurbel',         cost: 15,       out: 0.1  },
@@ -41,6 +41,8 @@
     { id: 'mix',      icon: '🔀', name: 'Voller Energiemix',  desc: 'Von jedem Typ mind. 1',   check: () => typesOwned() >= GENERATORS.length },
     { id: 'park50',   icon: '🏭', name: 'Kraftwerkspark',     desc: '50 Kraftwerke besitzen',  check: () => genTotal() >= 50 },
     { id: 'park250',  icon: '🏙️', name: 'Energiekonzern',     desc: '250 Kraftwerke besitzen', check: () => genTotal() >= 250 },
+    { id: 'ms10',     icon: '🎯', name: 'Erster Meilenstein',  desc: '10 gleiche Kraftwerke',   check: () => GENERATORS.some(g => idle.gens[g.id] >= 10) },
+    { id: 'ms100',    icon: '💯', name: 'Volle Hütte',         desc: '100 gleiche Kraftwerke',  check: () => GENERATORS.some(g => idle.gens[g.id] >= 100) },
     { id: 'eff10',    icon: '📈', name: 'Effizienzwunder',    desc: 'Wirkungsgrad Stufe 10',   check: () => idle.effLevel >= 10 },
     { id: 'grid1',    icon: '🔌', name: 'Netzausbau',         desc: 'Erster Netzausbau',       check: () => idle.prestige >= 1 },
     { id: 'grid10',   icon: '🏆', name: 'Netzbetreiber',      desc: '10 Ausbaupunkte',         check: () => idle.prestige >= 10 }
@@ -67,9 +69,18 @@
   function idlePrestigeMult() { return 1 + 0.02 * idle.prestige; }
   function idleAchBonus() { return 1 + ACH_BONUS * achSet.size; }
   function idleGlobalMult() { return idlePrestigeMult() * Math.pow(1.1, idle.effLevel) * idleAchBonus(); }
+
+  // ─── Kraftwerks-Meilensteine ───
+  // Ab bestimmten Stückzahlen verdoppelt sich die Leistung eines Kraftwerks.
+  const MILESTONES = [10, 25, 50, 100, 150, 200, 250, 300, 400, 500, 750, 1000];
+  function msCount(owned) { let c = 0; for (const t of MILESTONES) if (owned >= t) c++; return c; }
+  function msMult(owned) { return Math.pow(2, msCount(owned)); }
+  function msNext(owned) { for (const t of MILESTONES) if (owned < t) return t; return null; }
+  function msPrev(owned) { let p = 0; for (const t of MILESTONES) { if (owned >= t) p = t; else break; } return p; }
+
   function idlePerSecond() {
     let base = 0;
-    for (const g of GENERATORS) base += idle.gens[g.id] * g.out;
+    for (const g of GENERATORS) base += idle.gens[g.id] * g.out * msMult(idle.gens[g.id]);
     return base * idleGlobalMult();
   }
   function idleClickGain() { return (1 + idle.clickLevel) * idleGlobalMult() + 0.05 * idlePerSecond(); }
@@ -108,6 +119,10 @@
             <span class="idle-row-owned" id="genowned-${g.id}">×0</span>
           </div>
           <div class="idle-row-sub" id="genout-${g.id}"></div>
+          <div class="idle-ms" id="genms-${g.id}">
+            <div class="idle-ms-bar"><span id="gensbar-${g.id}"></span></div>
+            <span class="idle-ms-txt" id="genmstxt-${g.id}"></span>
+          </div>
         </div>
         <button class="idle-buy-btn" id="genbuy-${g.id}">
           <span id="genlbl-${g.id}">Kaufen</span>
@@ -276,9 +291,26 @@
       idleRevealed[g.id] = revealed;
       $('genrow-' + g.id).classList.toggle('idle-locked', !revealed);
       setText('genowned-' + g.id, '×' + owned);
+      const mm = msMult(owned);
+      const perUnit = g.out * idleGlobalMult() * mm;
       setText('genout-' + g.id,
-        idleFmt(g.out * idleGlobalMult()) + ' ⚡/s' +
-        (owned > 0 ? '  ·  ∑ ' + idleFmt(owned * g.out * idleGlobalMult()) + ' ⚡/s' : ''));
+        idleFmt(perUnit) + ' ⚡/s' +
+        (owned > 0 ? '  ·  ∑ ' + idleFmt(owned * perUnit) + ' ⚡/s' : ''));
+
+      // Meilenstein-Balken + Text
+      const next = msNext(owned);
+      const bar = $('gensbar-' + g.id);
+      if (next === null) {
+        if (bar) bar.style.width = '100%';
+        setText('genmstxt-' + g.id, `×${idleFmt(mm)} · alle Meilensteine`);
+      } else {
+        const prev = msPrev(owned);
+        const frac = Math.max(0, Math.min(1, (owned - prev) / (next - prev)));
+        if (bar) bar.style.width = (frac * 100).toFixed(1) + '%';
+        const mmNext = idleFmt(mm * 2);
+        setText('genmstxt-' + g.id,
+          (mm > 1 ? `×${idleFmt(mm)} · ` : '') + `${owned}/${next} → ×${mmNext} (noch ${next - owned})`);
+      }
 
       const n = idle.buyAmount === 'max'
         ? Math.max(1, idleMaxAffordable(g, owned, idle.energy))

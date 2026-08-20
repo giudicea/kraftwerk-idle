@@ -17,10 +17,13 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
 - **Upgrades** — stärkerer Klick und +10 % Gesamt-Wirkungsgrad
 - **Netzausbau (Prestige)** — alles zurücksetzen für einen dauerhaften
   **+2 %**-Bonus je Ausbaupunkt
-- **16 Erfolge / Meilensteine** — jeder freigeschaltete Erfolg gibt dauerhaft
-  **+2 %** Gesamtleistung; Freischaltung wird per Toast eingeblendet
+- **Kraftwerks-Meilensteine** — je mehr Einheiten eines Kraftwerks du besitzt,
+  desto öfter **verdoppelt sich dessen Leistung** (bei 10, 25, 50, 100, … Stück).
+  Jede Zeile zeigt einen Fortschrittsbalken zum nächsten ×2-Bonus.
+- **18 Erfolge** — jeder freigeschaltete Erfolg gibt dauerhaft **+2 %**
+  Gesamtleistung; Freischaltung wird per Toast eingeblendet
 - **Automatisches Speichern** im Browser (localStorage) inkl.
-  **Offline-Gutschrift** (bis zu 8 h, „Willkommen zurück"-Toast)
+  **Offline-Gutschrift** (bis zu 12 h, „Willkommen zurück"-Toast)
 
 ## Lokal spielen
 
