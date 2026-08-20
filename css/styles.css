@@ -419,3 +419,59 @@ input[type="range"]:focus-visible { outline: 2px solid var(--color-accent); outl
 
 /* Karten-Kicker in Akzentfarbe leicht leuchten lassen */
 .card-kicker { text-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 25%, transparent); }
+
+/* ─── Lebendige Icons (Animationen) ─── */
+.idle-row-icon svg { overflow: visible; }
+.idle-row-icon .fx-rotor { transform-box: fill-box; transform-origin: center; animation: fx-rotor 5s linear infinite; }
+.idle-row-icon .fx-core  { transform-box: fill-box; transform-origin: center; animation: fx-corepulse 1.7s ease-in-out infinite; }
+.idle-row-icon .fx-sun   { transform-box: fill-box; transform-origin: 18px 5.4px; animation: fx-corepulse 2.4s ease-in-out infinite; }
+.idle-row-icon .fx-flame { transform-box: fill-box; transform-origin: bottom center; animation: fx-flame 0.5s ease-in-out infinite alternate; }
+.idle-row-icon .fx-steam { transform-box: fill-box; transform-origin: center; animation: fx-steam 2.4s ease-in-out infinite; }
+.idle-row-icon .fx-wave  { transform-box: fill-box; animation: fx-wave 2.6s ease-in-out infinite; }
+/* gesperrte Kraftwerke stehen still */
+.idle-locked .idle-row-icon .fx-rotor,
+.idle-locked .idle-row-icon .fx-core,
+.idle-locked .idle-row-icon .fx-sun,
+.idle-locked .idle-row-icon .fx-flame,
+.idle-locked .idle-row-icon .fx-steam,
+.idle-locked .idle-row-icon .fx-wave { animation: none; }
+@keyframes fx-rotor { to { transform: rotate(360deg); } }
+@keyframes fx-corepulse { 0%,100% { transform: scale(0.82); opacity: 0.45; } 50% { transform: scale(1.15); opacity: 0.9; } }
+@keyframes fx-flame { from { transform: scaleY(1) scaleX(1); opacity: 0.9; } to { transform: scaleY(1.14) scaleX(0.94); opacity: 1; } }
+@keyframes fx-steam { 0%,100% { transform: translateY(1px) scale(0.9); opacity: 0.16; } 50% { transform: translateY(-1.5px) scale(1.06); opacity: 0.36; } }
+@keyframes fx-wave { 0%,100% { transform: translateX(0); } 50% { transform: translateX(1.6px); } }
+
+/* ─── Aufsteigende „+N"-Zahl beim Klicken ─── */
+.float-num {
+  position: fixed; z-index: 65; pointer-events: none;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-heading); font-weight: 700; font-size: 16px;
+  color: var(--color-accent-2); text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+  animation: float-num 1s ease-out forwards;
+}
+@keyframes float-num {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  20%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), -70%) scale(1.05); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -180%) scale(1); }
+}
+
+/* ─── Funken-Partikel beim Kauf ─── */
+.fx-spark {
+  position: fixed; z-index: 64; pointer-events: none;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--color-accent) 80%, transparent);
+  transform: translate(-50%, -50%);
+  animation: fx-spark 0.6s ease-out forwards;
+}
+@keyframes fx-spark {
+  0%   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))) scale(0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idle-row-icon .fx-rotor, .idle-row-icon .fx-core, .idle-row-icon .fx-sun,
+  .idle-row-icon .fx-flame, .idle-row-icon .fx-steam, .idle-row-icon .fx-wave { animation: none; }
+  .float-num { animation-duration: 0.6s; }
+  .fx-spark { display: none; }
+}

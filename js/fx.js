@@ -32,36 +32,37 @@
       `<path d="M5.5 12h4M5.5 15h4" ${S}/>` +
       `<path d="M12 13.5h3V9.4h3" ${S}/>` +
       `<circle cx="18" cy="7.5" r="1.7" ${A}/><circle cx="18" cy="7.5" r="1.7" ${S}/><path d="M18 5.8V4.5" ${S}/>`),
-    // Solarpanel: Sonne + geneigtes Panelraster
+    // Solarpanel: Sonne (pulsiert) + geneigtes Panelraster
     solar: wrap(
-      `<circle cx="18" cy="5.4" r="2.3" ${A}/><circle cx="18" cy="5.4" r="2.3" ${S}/>` +
-      `<path d="M18 1.8v1M18 8v1M14.5 5.4h1M20.5 5.4h1M15.5 2.9l.7.7M20.5 7.3l-.7-.7" ${S}/>` +
+      `<g class="fx-sun"><circle cx="18" cy="5.4" r="2.3" ${A}/><circle cx="18" cy="5.4" r="2.3" ${S}/>` +
+      `<path d="M18 1.8v1M18 8v1M14.5 5.4h1M20.5 5.4h1M15.5 2.9l.7.7M20.5 7.3l-.7-.7" ${S}/></g>` +
       `<path d="M4 19l2.7-8h8.6l2.7 8z" ${A}/><path d="M4 19l2.7-8h8.6l2.7 8z" ${S}/>` +
       `<path d="M5.6 15h12.8M10.8 11v8M14.2 11l-1 8" ${S}/>`),
-    // Windrad: Turm + 3 Rotorblätter
+    // Windrad: Turm + drehender Rotor (3 Blätter)
     wind: wrap(
       `<path d="M11.3 10.5 11 20.5h2l-.3-10z" ${A}/><path d="M11.3 10.5 11 20.5h2l-.3-10z" ${S}/><path d="M9.6 20.5h4.8" ${S}/>` +
+      `<g class="fx-rotor">` +
       `<g ${A}><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(120 12 9.6)"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(240 12 9.6)"/></g>` +
       `<g ${S}><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(120 12 9.6)"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(240 12 9.6)"/></g>` +
-      `<circle cx="12" cy="9.6" r="1.3" ${F}/>`),
-    // Wasserkraft: Staumauer + Wellen
+      `<circle cx="12" cy="9.6" r="1.3" ${F}/></g>`),
+    // Wasserkraft: Staumauer + fließende Wellen
     wasser: wrap(
       `<path d="M5 6h14v8H5z" ${A}/><path d="M5 6h14v8H5z" ${S}/><path d="M9 6v8M13 6v8" ${S}/>` +
-      `<path d="M4 17c1.4-1.3 2.8-1.3 4 0s2.6 1.3 4 0 2.8-1.3 4 0 2.6 1.3 4 0" ${S}/>` +
-      `<path d="M4 20c1.4-1.3 2.8-1.3 4 0s2.6 1.3 4 0 2.8-1.3 4 0 2.6 1.3 4 0" ${S}/>`),
-    // BHKW: Motorblock + Flamme (Kraft-Wärme-Kopplung)
+      `<g class="fx-wave"><path d="M4 17c1.4-1.3 2.8-1.3 4 0s2.6 1.3 4 0 2.8-1.3 4 0 2.6 1.3 4 0" ${S}/>` +
+      `<path d="M4 20c1.4-1.3 2.8-1.3 4 0s2.6 1.3 4 0 2.8-1.3 4 0 2.6 1.3 4 0" ${S}/></g>`),
+    // BHKW: Motorblock + flackernde Flamme
     bhkw: wrap(
       `<rect x="3" y="10" width="10.5" height="8.5" rx="2" ${A}/><rect x="3" y="10" width="10.5" height="8.5" rx="2" ${S}/>` +
       `<path d="M5.6 10V7.3M8.2 10V7.3M10.8 10V7.3" ${S}/><path d="M5.6 14.6h5.3" ${S}/>` +
-      `<path d="M18.4 18c-1.8 0-3.1-1.4-3.1-3.1 0-1.6 1.3-2.5 1.6-3.9.8 1.3 1.2 1.7 2 2.6.8.8 1.2 1.7 1.2 2.8 0 1-.8 1.6-1.7 1.6z" ${F}/>`),
-    // Kernkraft: Kühlturm + Dampf
+      `<path class="fx-flame" d="M18.4 18c-1.8 0-3.1-1.4-3.1-3.1 0-1.6 1.3-2.5 1.6-3.9.8 1.3 1.2 1.7 2 2.6.8.8 1.2 1.7 1.2 2.8 0 1-.8 1.6-1.7 1.6z" ${F}/>`),
+    // Kernkraft: Kühlturm + aufsteigender Dampf
     kern: wrap(
       `<path d="M8 6c-1 4.6-1.2 9.4-1.6 13h11.2c-.4-3.6-.6-8.4-1.6-13z" ${A}/>` +
       `<path d="M8 6c-1 4.6-1.2 9.4-1.6 13h11.2c-.4-3.6-.6-8.4-1.6-13z" ${S}/><path d="M8 6h8" ${S}/><path d="M7 15c2.4-1.1 7.6-1.1 10 0" ${S}/>` +
-      `<path d="M9 4.2c.2-1.1 1.6-1.3 2.2-.5.5-1 2.3-.8 2.4.5.9-.1 1.4.8 1 1.6H8.6c-.4-.8 0-1.6.9-1.6z" ${A}/>`),
-    // Fusion: Atom mit Orbits + leuchtendem Kern
+      `<path class="fx-steam" d="M9 4.2c.2-1.1 1.6-1.3 2.2-.5.5-1 2.3-.8 2.4.5.9-.1 1.4.8 1 1.6H8.6c-.4-.8 0-1.6.9-1.6z" ${A}/>`),
+    // Fusion: Atom mit Orbits + pulsierendem Kern
     fusion: wrap(
-      `<circle cx="12" cy="12" r="3.2" ${A}/>` +
+      `<circle class="fx-core" cx="12" cy="12" r="3.2" ${A}/>` +
       `<ellipse cx="12" cy="12" rx="8.6" ry="3.4" ${S}/><ellipse cx="12" cy="12" rx="8.6" ry="3.4" transform="rotate(60 12 12)" ${S}/><ellipse cx="12" cy="12" rx="8.6" ry="3.4" transform="rotate(120 12 12)" ${S}/>` +
       `<circle cx="12" cy="12" r="1.8" ${F}/><circle cx="20.4" cy="12" r="1" ${F}/><circle cx="7.8" cy="4.7" r="1" ${F}/>`)
   };
@@ -237,6 +238,38 @@
     setTimeout(() => el.remove(), 700);
   }
 
+  // ─── Aufsteigende „+N"-Zahl ───
+  function floatText(x, y, text) {
+    const el = document.createElement('div');
+    el.className = 'float-num';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    // leichte horizontale Streuung, damit schnelle Klicks nicht überlappen
+    el.style.setProperty('--dx', (Math.random() * 30 - 15).toFixed(0) + 'px');
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+    setTimeout(() => el.remove(), 1100);
+  }
+
+  // ─── Funken-Partikel (z. B. beim Kauf) ───
+  function sparkle(x, y, n) {
+    n = n || 8;
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('div');
+      s.className = 'fx-spark';
+      const ang = (Math.PI * 2 * i) / n + Math.random() * 0.5;
+      const dist = 16 + Math.random() * 18;
+      s.style.left = x + 'px';
+      s.style.top = y + 'px';
+      s.style.setProperty('--tx', (Math.cos(ang) * dist).toFixed(1) + 'px');
+      s.style.setProperty('--ty', (Math.sin(ang) * dist).toFixed(1) + 'px');
+      document.body.appendChild(s);
+      s.addEventListener('animationend', () => s.remove());
+      setTimeout(() => s.remove(), 800);
+    }
+  }
+
   // ─── Originale Hintergrundmusik (geloopter Sequencer, kein Audio-File) ───
   // Ruhiger Synthwave-Loop in a-Moll: Am – F – C – G, je 1 Takt.
   const MUSIC_KEY = 'kraftwerk-idle-music';
@@ -354,7 +387,7 @@
 
 
   window.KraftFX = {
-    icon, zap, buy, upgrade, prestige, unlock, denied, burst,
+    icon, zap, buy, upgrade, prestige, unlock, denied, burst, floatText, sparkle,
     isMuted, toggleMute,
     humOn, toggleHum,
     musicOn, toggleMusic,

@@ -222,6 +222,7 @@
     btn.classList.remove('idle-pulse');
     void btn.offsetWidth;
     btn.classList.add('idle-pulse');
+    if (window.KraftFX) { const r = btn.getBoundingClientRect(); KraftFX.sparkle(r.left + r.width / 2, r.top + r.height / 2, 9); }
     checkAchievements(false);
     renderIdleView();
     saveIdle();
@@ -267,6 +268,7 @@
       if (e && typeof e.clientX === 'number' && (e.clientX || e.clientY)) { x = e.clientX; y = e.clientY; }
       else { const b = $('idle-click'); if (b) { const r = b.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; } }
       KraftFX.burst(x, y);
+      KraftFX.floatText(x, y - 6, '+' + idleFmt(gain));
     }
     renderIdleView();
   }
