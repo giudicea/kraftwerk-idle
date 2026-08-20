@@ -17,8 +17,10 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
 - **Upgrades** — stärkerer Klick und +10 % Gesamt-Wirkungsgrad
 - **Netzausbau (Prestige)** — alles zurücksetzen für einen dauerhaften
   **+2 %**-Bonus je Ausbaupunkt
+- **16 Erfolge / Meilensteine** — jeder freigeschaltete Erfolg gibt dauerhaft
+  **+2 %** Gesamtleistung; Freischaltung wird per Toast eingeblendet
 - **Automatisches Speichern** im Browser (localStorage) inkl.
-  **Offline-Gutschrift** (bis zu 8 h)
+  **Offline-Gutschrift** (bis zu 8 h, „Willkommen zurück"-Toast)
 
 ## Lokal spielen
 

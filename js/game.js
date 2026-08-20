@@ -22,11 +22,37 @@
     { id: 'eff',   name: 'Wirkungsgrad +10 %', desc: 'Alle Kraftwerke leisten mehr', baseCost: 800, growth: 4 }
   ];
 
+  // ─── Erfolge / Meilensteine ───
+  // Jeder freigeschaltete Erfolg gibt dauerhaft +2 % Gesamtleistung.
+  const ACH_BONUS = 0.02;
+  function genTotal() { let s = 0; for (const g of GENERATORS) s += idle.gens[g.id]; return s; }
+  function typesOwned() { let s = 0; for (const g of GENERATORS) if (idle.gens[g.id] > 0) s++; return s; }
+  const ACHIEVEMENTS = [
+    { id: 'spark',    icon: '✨', name: 'Erster Funke',       desc: '10 ⚡ erzeugt',            check: () => idle.total >= 10 },
+    { id: 'kilo',     icon: '🔋', name: 'Kilowatt-Klub',      desc: '1 000 ⚡ erzeugt',         check: () => idle.total >= 1e3 },
+    { id: 'mega',     icon: '⚙️', name: 'Megawatt',           desc: '1 Mio. ⚡ erzeugt',        check: () => idle.total >= 1e6 },
+    { id: 'giga',     icon: '🚗', name: '1,21 Gigawatt!',     desc: '1,21 Mrd. ⚡ erzeugt',     check: () => idle.total >= 1.21e9 },
+    { id: 'tera',     icon: '🌐', name: 'Terawatt',           desc: '1 Bio. ⚡ erzeugt',        check: () => idle.total >= 1e12 },
+    { id: 'click100', icon: '👆', name: 'Kurbler',            desc: '100-mal geklickt',        check: () => idle.clicks >= 100 },
+    { id: 'click1k',  icon: '💪', name: 'Dauerdrücker',       desc: '1 000-mal geklickt',      check: () => idle.clicks >= 1000 },
+    { id: 'solar',    icon: '☀️', name: 'Sonnenanbeter',      desc: 'Erstes Solarpanel',       check: () => idle.gens.solar >= 1 },
+    { id: 'kern',     icon: '☢️', name: 'Ja bitte',           desc: 'Erstes Kernkraftwerk',    check: () => idle.gens.kern >= 1 },
+    { id: 'fusion',   icon: '⭐', name: 'Sonne im Keller',    desc: 'Erster Fusionsreaktor',   check: () => idle.gens.fusion >= 1 },
+    { id: 'mix',      icon: '🔀', name: 'Voller Energiemix',  desc: 'Von jedem Typ mind. 1',   check: () => typesOwned() >= GENERATORS.length },
+    { id: 'park50',   icon: '🏭', name: 'Kraftwerkspark',     desc: '50 Kraftwerke besitzen',  check: () => genTotal() >= 50 },
+    { id: 'park250',  icon: '🏙️', name: 'Energiekonzern',     desc: '250 Kraftwerke besitzen', check: () => genTotal() >= 250 },
+    { id: 'eff10',    icon: '📈', name: 'Effizienzwunder',    desc: 'Wirkungsgrad Stufe 10',   check: () => idle.effLevel >= 10 },
+    { id: 'grid1',    icon: '🔌', name: 'Netzausbau',         desc: 'Erster Netzausbau',       check: () => idle.prestige >= 1 },
+    { id: 'grid10',   icon: '🏆', name: 'Netzbetreiber',      desc: '10 Ausbaupunkte',         check: () => idle.prestige >= 10 }
+  ];
+
   const idle = {
     energy: 0, total: 0, gens: {}, clickLevel: 0, effLevel: 0,
-    prestige: 0, lastSave: Date.now(), buyAmount: '1', started: false
+    prestige: 0, lastSave: Date.now(), buyAmount: '1', started: false,
+    clicks: 0, ach: []
   };
   GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
+  const achSet = new Set();
 
   // ─── Berechnungen ───
   function idleFmt(n) {
@@ -39,7 +65,8 @@
     return n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) + ' ' + units[i];
   }
   function idlePrestigeMult() { return 1 + 0.02 * idle.prestige; }
-  function idleGlobalMult() { return idlePrestigeMult() * Math.pow(1.1, idle.effLevel); }
+  function idleAchBonus() { return 1 + ACH_BONUS * achSet.size; }
+  function idleGlobalMult() { return idlePrestigeMult() * Math.pow(1.1, idle.effLevel) * idleAchBonus(); }
   function idlePerSecond() {
     let base = 0;
     for (const g of GENERATORS) base += idle.gens[g.id] * g.out;
@@ -106,7 +133,50 @@
       </div>`).join('');
     UPGRADES.forEach(u => { $('upbuy-' + u.id).addEventListener('click', () => idleBuyUpgrade(u.id)); });
 
+    const ac = $('idle-achievements');
+    if (ac) {
+      ac.innerHTML = ACHIEVEMENTS.map(a => `
+        <div class="ach locked" id="ach-${a.id}" title="${a.desc}">
+          <span class="ach-ico">${a.icon}</span>
+          <span class="ach-txt"><span class="ach-name">${a.name}</span><span class="ach-desc">${a.desc}</span></span>
+        </div>`).join('');
+    }
+
     idleBuilt = true;
+  }
+
+  // ─── Toast-Benachrichtigung ───
+  function idleToast(icon, title, sub) {
+    const box = $('kraft-toasts');
+    if (!box) return;
+    const el = document.createElement('div');
+    el.className = 'kraft-toast';
+    el.innerHTML =
+      `<span class="kraft-toast-ico">${icon}</span>` +
+      `<span class="kraft-toast-txt"><strong>${title}</strong>${sub ? '<span>' + sub + '</span>' : ''}</span>`;
+    box.appendChild(el);
+    const kill = () => { el.classList.add('leaving'); setTimeout(() => el.remove(), 400); };
+    setTimeout(kill, 5000);
+    el.addEventListener('click', kill);
+  }
+
+  // Neu erfüllte Erfolge freischalten. silent=true => beim Laden ohne Ton/Toast.
+  function checkAchievements(silent) {
+    let changed = false;
+    for (const a of ACHIEVEMENTS) {
+      if (achSet.has(a.id)) continue;
+      if (a.check()) {
+        achSet.add(a.id);
+        idle.ach.push(a.id);
+        changed = true;
+        if (!silent) {
+          idleToast(a.icon, 'Erfolg: ' + a.name, a.desc + '  ·  +' + (ACH_BONUS * 100).toFixed(0) + ' % Leistung');
+          if (window.KraftFX) KraftFX.unlock();
+        }
+      }
+    }
+    if (changed && !silent) saveIdle();
+    return changed;
   }
 
   // ─── Aktionen ───
@@ -127,6 +197,7 @@
     btn.classList.remove('idle-pulse');
     void btn.offsetWidth;
     btn.classList.add('idle-pulse');
+    checkAchievements(false);
     renderIdleView();
     saveIdle();
   }
@@ -138,6 +209,7 @@
     idle.energy -= cost;
     if (id === 'click') idle.clickLevel++; else idle.effLevel++;
     if (window.KraftFX) KraftFX.upgrade();
+    checkAchievements(false);
     renderIdleView();
     saveIdle();
   }
@@ -152,6 +224,7 @@
     idle.clickLevel = 0;
     idle.effLevel = 0;
     GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
+    checkAchievements(false);
     renderIdleView();
     saveIdle();
   }
@@ -160,7 +233,9 @@
     const gain = idleClickGain();
     idle.energy += gain;
     idle.total += gain;
+    idle.clicks++;
     idle.started = true;
+    checkAchievements(false);
     if (window.KraftFX) {
       KraftFX.zap(gain);
       let x = window.innerWidth / 2, y = window.innerHeight / 2;
@@ -175,6 +250,7 @@
     if (!window.confirm('Spielstand wirklich unwiderruflich löschen?')) return;
     idle.energy = 0; idle.total = 0; idle.clickLevel = 0; idle.effLevel = 0;
     idle.prestige = 0; idle.buyAmount = '1'; idle.started = false;
+    idle.clicks = 0; idle.ach = []; achSet.clear();
     GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
     const r1 = document.querySelector('input[name="idle-buy"][value="1"]');
     if (r1) r1.checked = true;
@@ -228,6 +304,17 @@
     setText('idle-prestige-gain', '+' + pg);
     setText('idle-prestige-have', idle.prestige);
     $('idle-prestige').disabled = pg < 1;
+
+    for (const a of ACHIEVEMENTS) {
+      const el = $('ach-' + a.id);
+      if (!el) continue;
+      const got = achSet.has(a.id);
+      el.classList.toggle('locked', !got);
+      el.classList.toggle('unlocked', got);
+    }
+    setText('idle-ach-summary',
+      achSet.size + ' / ' + ACHIEVEMENTS.length + ' · +' + Math.round(ACH_BONUS * 100 * achSet.size) + ' %');
+
     idleFirstRender = false;
   }
 
@@ -238,7 +325,8 @@
       localStorage.setItem(IDLE_KEY, JSON.stringify({
         energy: idle.energy, total: idle.total, gens: idle.gens,
         clickLevel: idle.clickLevel, effLevel: idle.effLevel,
-        prestige: idle.prestige, lastSave: idle.lastSave, buyAmount: idle.buyAmount
+        prestige: idle.prestige, lastSave: idle.lastSave, buyAmount: idle.buyAmount,
+        clicks: idle.clicks, ach: idle.ach
       }));
     } catch (e) { /* Speicher voll o. deaktiviert */ }
   }
@@ -256,7 +344,15 @@
     idle.buyAmount = s.buyAmount === '10' || s.buyAmount === 'max' ? s.buyAmount : '1';
     idle.lastSave = +s.lastSave || Date.now();
     idle.started = true;
+    idle.clicks = +s.clicks || 0;
     if (s.gens) GENERATORS.forEach(g => { idle.gens[g.id] = +s.gens[g.id] || 0; });
+    // Erfolge wiederherstellen (nur bekannte IDs)
+    idle.ach = [];
+    achSet.clear();
+    if (Array.isArray(s.ach)) {
+      const known = new Set(ACHIEVEMENTS.map(a => a.id));
+      s.ach.forEach(id => { if (known.has(id) && !achSet.has(id)) { achSet.add(id); idle.ach.push(id); } });
+    }
 
     // Offline-Gutschrift
     const elapsed = Math.min(IDLE_OFFLINE_CAP, Math.max(0, (Date.now() - idle.lastSave) / 1000));
@@ -264,19 +360,24 @@
     if (gain > 0) {
       idle.energy += gain;
       idle.total += gain;
+      const dauer = elapsed < 3600 ? Math.round(elapsed / 60) + ' min' : (elapsed / 3600).toFixed(1) + ' h';
       const note = $('idle-offline');
       if (note) {
-        const mins = Math.round(elapsed / 60);
-        note.textContent = `Willkommen zurück: +${idleFmt(gain)} ⚡ in ${mins < 60 ? mins + ' min' : (elapsed / 3600).toFixed(1) + ' h'} offline`;
+        note.textContent = `Willkommen zurück: +${idleFmt(gain)} ⚡ in ${dauer} offline`;
         note.classList.remove('hidden');
         setTimeout(() => note.classList.add('hidden'), 8000);
       }
+      idleToast('🔌', 'Willkommen zurück!', `+${idleFmt(gain)} ⚡ in ${dauer} offline erzeugt`);
     }
+
+    // Bereits erfüllte Erfolge lautlos übernehmen (z. B. alte Spielstände)
+    checkAchievements(true);
   }
 
   // ─── Spiel-Loop ───
   let idleLast = 0;
   let idleSaveAcc = 0;
+  let idleAchAcc = 0;
   function idleTick(now) {
     if (!idleLast) idleLast = now;
     const dt = Math.min(1, (now - idleLast) / 1000);
@@ -285,6 +386,8 @@
     if (gain > 0) { idle.energy += gain; idle.total += gain; }
     idleSaveAcc += dt;
     if (idleSaveAcc >= 10) { idleSaveAcc = 0; saveIdle(); }
+    idleAchAcc += dt;
+    if (idleAchAcc >= 1) { idleAchAcc = 0; checkAchievements(false); }
     renderIdleView();
     requestAnimationFrame(idleTick);
   }
