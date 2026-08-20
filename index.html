@@ -34,6 +34,7 @@
         <span id="idle-energy" style="font-size:34px;font-family:var(--font-heading);line-height:1.1">0&nbsp;⚡</span>
         <span class="text-muted" style="font-size:13px"><span id="idle-rate">0</span> ⚡/s</span>
         <span class="hidden" id="idle-offline" style="font-size:12px;color:var(--color-accent)"></span>
+        <span class="hidden idle-buffs" id="idle-buffs"></span>
       </div>
 
       <button class="btn btn-secondary elev-md" id="idle-click" style="padding:16px;font-size:16px;justify-content:center">
@@ -107,6 +108,7 @@
     <div class="modal-tabs" role="tablist">
       <button class="modal-tab is-active" id="tab-sound" role="tab" aria-selected="true">🔊 Sound</button>
       <button class="modal-tab" id="tab-cheats" role="tab" aria-selected="false">🎮 Cheats</button>
+      <button class="modal-tab" id="tab-stats" role="tab" aria-selected="false">📊 Statistik</button>
     </div>
 
     <!-- Tab: Sound -->
@@ -135,6 +137,20 @@
         <span class="card-kicker">Verfügbare Codes</span>
         <ul id="cheat-list"></ul>
       </div>
+    </div>
+
+    <!-- Tab: Statistik -->
+    <div class="modal-panel hidden" id="panel-stats">
+      <div class="stat-grid">
+        <div class="stat-cell"><span class="card-kicker">Spielzeit</span><span id="stat-play">0 s</span></div>
+        <div class="stat-cell"><span class="card-kicker">Klicks gesamt</span><span id="stat-clicks">0</span></div>
+        <div class="stat-cell"><span class="card-kicker">Insgesamt erzeugt</span><span id="stat-total">0 ⚡</span></div>
+        <div class="stat-cell"><span class="card-kicker">Netz-Bonus</span><span id="stat-mult">×1.00</span></div>
+        <div class="stat-cell"><span class="card-kicker">Ausbaupunkte</span><span id="stat-prestige">0</span></div>
+        <div class="stat-cell"><span class="card-kicker">Erfolge</span><span id="stat-ach">0 / 18</span></div>
+        <div class="stat-cell"><span class="card-kicker">Stromstöße gefangen</span><span id="stat-surges">0</span></div>
+      </div>
+      <p class="text-muted" style="font-size:11px;margin:2px 0 0">💡 Tipp: Halte nach goldenen <strong>Stromstößen</strong> Ausschau – anklicken bringt Energie oder einen Zeitbonus!</p>
     </div>
   </div>
 </div>

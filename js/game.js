@@ -53,7 +53,7 @@
   const idle = {
     energy: 0, total: 0, gens: {}, clickLevel: 0, effLevel: 0,
     prestige: 0, lastSave: Date.now(), buyAmount: '1', started: false,
-    clicks: 0, ach: [], speed: 1
+    clicks: 0, ach: [], speed: 1, play: 0, surges: 0
   };
   GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
   const achSet = new Set();
@@ -68,9 +68,15 @@
     while (n >= 1000 && i < units.length - 1) { n /= 1000; i++; }
     return n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) + ' ' + units[i];
   }
+  // ─── Temporäre Buffs (Stromstoß-Belohnungen; nicht persistent) ───
+  let buffProdUntil = 0, buffProdMult = 1;
+  let buffClickUntil = 0, buffClickMult = 1;
+  function buffProd() { return Date.now() < buffProdUntil ? buffProdMult : 1; }
+  function buffClick() { return Date.now() < buffClickUntil ? buffClickMult : 1; }
+
   function idlePrestigeMult() { return 1 + 0.02 * idle.prestige; }
   function idleAchBonus() { return 1 + ACH_BONUS * achSet.size; }
-  function idleGlobalMult() { return idlePrestigeMult() * Math.pow(1.1, idle.effLevel) * idleAchBonus(); }
+  function idleGlobalMult() { return idlePrestigeMult() * Math.pow(1.1, idle.effLevel) * idleAchBonus() * buffProd(); }
 
   // ─── Kraftwerks-Meilensteine ───
   // Ab bestimmten Stückzahlen verdoppelt sich die Leistung eines Kraftwerks.
@@ -85,7 +91,7 @@
     for (const g of GENERATORS) base += idle.gens[g.id] * g.out * msMult(idle.gens[g.id]);
     return base * idleGlobalMult();
   }
-  function idleClickGain() { return (1 + idle.clickLevel) * idleGlobalMult() + 0.05 * idlePerSecond(); }
+  function idleClickGain() { return ((1 + idle.clickLevel) * idleGlobalMult() + 0.05 * idlePerSecond()) * buffClick(); }
   function idlePrestigePotential() { return Math.floor(Math.sqrt(idle.total / 1e6)); }
   function idlePrestigeGain() { return Math.max(0, idlePrestigePotential() - idle.prestige); }
 
@@ -269,6 +275,8 @@
     idle.energy = 0; idle.total = 0; idle.clickLevel = 0; idle.effLevel = 0;
     idle.prestige = 0; idle.buyAmount = '1'; idle.started = false;
     idle.clicks = 0; idle.ach = []; achSet.clear(); idle.speed = 1;
+    idle.play = 0; idle.surges = 0;
+    buffProdUntil = 0; buffClickUntil = 0;
     GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
     const r1 = document.querySelector('input[name="idle-buy"][value="1"]');
     if (r1) r1.checked = true;
@@ -355,6 +363,18 @@
     setText('idle-ach-summary',
       achSet.size + ' / ' + ACHIEVEMENTS.length + ' · +' + Math.round(ACH_BONUS * 100 * achSet.size) + ' %');
 
+    // Aktive Buffs (Stromstoß)
+    const be = $('idle-buffs');
+    if (be) {
+      const now = Date.now();
+      const parts = [];
+      if (now < buffProdUntil) parts.push(`🔥 Produktion ×${buffProdMult} · ${Math.ceil((buffProdUntil - now) / 1000)} s`);
+      if (now < buffClickUntil) parts.push(`👆 Klick ×${buffClickMult} · ${Math.ceil((buffClickUntil - now) / 1000)} s`);
+      be.textContent = parts.join('   ·   ');
+      be.classList.toggle('hidden', parts.length === 0);
+    }
+
+    updateStats();
     idleFirstRender = false;
   }
 
@@ -366,7 +386,8 @@
         energy: idle.energy, total: idle.total, gens: idle.gens,
         clickLevel: idle.clickLevel, effLevel: idle.effLevel,
         prestige: idle.prestige, lastSave: idle.lastSave, buyAmount: idle.buyAmount,
-        clicks: idle.clicks, ach: idle.ach, speed: idle.speed
+        clicks: idle.clicks, ach: idle.ach, speed: idle.speed,
+        play: idle.play, surges: idle.surges
       }));
     } catch (e) { /* Speicher voll o. deaktiviert */ }
   }
@@ -386,6 +407,8 @@
     idle.started = true;
     idle.clicks = +s.clicks || 0;
     idle.speed = +s.speed > 0 ? Math.min(1000, +s.speed) : 1;
+    idle.play = +s.play || 0;
+    idle.surges = +s.surges || 0;
     if (s.gens) GENERATORS.forEach(g => { idle.gens[g.id] = Math.min(MAX_PER_GEN, +s.gens[g.id] || 0); });
     // Erfolge wiederherstellen (nur bekannte IDs)
     idle.ach = [];
@@ -424,13 +447,15 @@
   let idleAchAcc = 0;
   function idleTick(now) {
     if (!idleLast) idleLast = now;
-    const dt = Math.min(1, (now - idleLast) / 1000) * (idle.speed || 1);
+    const realDt = Math.min(1, (now - idleLast) / 1000);
+    const dt = realDt * (idle.speed || 1);
     idleLast = now;
+    if (idle.started) idle.play += realDt;   // echte Spielzeit (ohne Speed)
     const gain = idlePerSecond() * dt;
     if (gain > 0) { idle.energy += gain; idle.total += gain; }
-    idleSaveAcc += dt;
+    idleSaveAcc += realDt;
     if (idleSaveAcc >= 10) { idleSaveAcc = 0; saveIdle(); }
-    idleAchAcc += dt;
+    idleAchAcc += realDt;
     if (idleAchAcc >= 1) { idleAchAcc = 0; checkAchievements(false); }
     renderIdleView();
     requestAnimationFrame(idleTick);
@@ -449,6 +474,7 @@
     { codes: ['ausbau'],                 desc: '+10 Ausbaupunkte (Netz-Bonus)',          run: () => { idle.prestige += 10; return '🔌 +10 Ausbaupunkte'; } },
     { codes: ['vollausbau', 'maxbau'],   desc: 'alle Kraftwerke auf Maximum (500)',      run: () => { GENERATORS.forEach(g => { idle.gens[g.id] = MAX_PER_GEN; }); return '🏭 Alle Kraftwerke auf Max'; } },
     { codes: ['freischalten', 'unlock'], desc: 'von jedem Kraftwerk mind. 1',            run: () => { GENERATORS.forEach(g => { if (idle.gens[g.id] < 1) idle.gens[g.id] = 1; }); return '🔓 Alles freigeschaltet'; } },
+    { codes: ['stromstoss', 'surge'],    desc: 'sofort einen Stromstoß erscheinen lassen', run: () => { setTimeout(spawnSurge, 30); return '⚡ Stromstoß kommt!'; } },
     { codes: ['loeschen', 'wipe'],       desc: 'Spielstand löschen (mit Rückfrage)',     run: () => { setTimeout(idleResetSave, 60); return '🗑️ Löschen…'; } }
   ];
   function applyCheat(raw) {
@@ -489,18 +515,17 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close(); });
 
     // Tabs
-    const tabSound = $('tab-sound'), tabCheats = $('tab-cheats');
-    const panelSound = $('panel-sound'), panelCheats = $('panel-cheats');
-    const showTab = (sound) => {
-      tabSound.classList.toggle('is-active', sound);
-      tabCheats.classList.toggle('is-active', !sound);
-      tabSound.setAttribute('aria-selected', String(sound));
-      tabCheats.setAttribute('aria-selected', String(!sound));
-      panelSound.classList.toggle('hidden', !sound);
-      panelCheats.classList.toggle('hidden', sound);
+    const TABS = ['sound', 'cheats', 'stats'];
+    const showTab = (name) => {
+      TABS.forEach(t => {
+        const tab = $('tab-' + t), panel = $('panel-' + t);
+        const on = t === name;
+        if (tab) { tab.classList.toggle('is-active', on); tab.setAttribute('aria-selected', String(on)); }
+        if (panel) panel.classList.toggle('hidden', !on);
+      });
+      if (name === 'stats') updateStats();
     };
-    if (tabSound) tabSound.addEventListener('click', () => showTab(true));
-    if (tabCheats) tabCheats.addEventListener('click', () => showTab(false));
+    TABS.forEach(t => { const tab = $('tab-' + t); if (tab) tab.addEventListener('click', () => showTab(t)); });
 
     // Lautstärke-Regler
     sliders.forEach(name => {
@@ -528,6 +553,77 @@
 
     const list = $('cheat-list');
     if (list) list.innerHTML = CHEATS.map(c => `<li><code>${c.codes[0]}</code>${c.desc}</li>`).join('');
+  }
+
+  // ─── Stromstoß (zufälliger Klick-Bonus) ───
+  function grantSurgeReward() {
+    idle.surges = (idle.surges || 0) + 1;
+    const perSec = idlePerSecond();
+    const r = Math.random();
+    if (r < 0.5) {
+      const amount = Math.max(perSec * 90, idleClickGain() * 50, 25);
+      idle.energy += amount; idle.total += amount;
+      idleToast('⚡', 'Stromstoß eingefangen!', `+${idleFmt(amount)} ⚡ sofort`);
+      if (window.KraftFX) KraftFX.prestige();
+    } else if (r < 0.8) {
+      buffProdMult = 7; buffProdUntil = Date.now() + 30000;
+      idleToast('🔥', 'Überspannung!', 'Produktion ×7 für 30 s');
+      if (window.KraftFX) KraftFX.unlock();
+    } else {
+      buffClickMult = 10; buffClickUntil = Date.now() + 20000;
+      idleToast('👆', 'Klick-Rausch!', 'Klick ×10 für 20 s');
+      if (window.KraftFX) KraftFX.unlock();
+    }
+    idle.started = true;
+    checkAchievements(false);
+    renderIdleView();
+    saveIdle();
+  }
+  function spawnSurge() {
+    if (document.hidden) { scheduleSurge(); return; }   // nicht spawnen, wenn Tab weg
+    const el = document.createElement('button');
+    el.className = 'power-surge';
+    el.type = 'button';
+    el.setAttribute('aria-label', 'Stromstoß einsammeln');
+    el.innerHTML = '<svg viewBox="0 0 24 24" width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="currentColor"/></svg>';
+    el.style.left = (8 + Math.random() * 82).toFixed(1) + 'vw';
+    el.style.top = (16 + Math.random() * 66).toFixed(1) + 'vh';
+    document.body.appendChild(el);
+    let done = false;
+    const finish = (caught) => {
+      if (done) return; done = true;
+      clearTimeout(to);
+      el.classList.add('leaving');
+      setTimeout(() => el.remove(), 350);
+      if (caught) grantSurgeReward();
+      scheduleSurge();
+    };
+    el.addEventListener('click', () => finish(true));
+    const to = setTimeout(() => finish(false), 12000);   // verschwindet nach 12 s
+  }
+  function scheduleSurge() {
+    const delay = 60000 + Math.random() * 60000;         // alle 60–120 s
+    setTimeout(spawnSurge, delay);
+  }
+
+  // ─── Statistik ───
+  function fmtTime(sec) {
+    sec = Math.floor(sec || 0);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    if (h > 0) return `${h} h ${m} min`;
+    if (m > 0) return `${m} min ${s} s`;
+    return `${s} s`;
+  }
+  function updateStats() {
+    const panel = $('panel-stats');
+    if (!panel || panel.classList.contains('hidden')) return;
+    setText('stat-play', fmtTime(idle.play));
+    setText('stat-clicks', idleFmt(idle.clicks));
+    setText('stat-total', idleFmt(idle.total) + ' ⚡');
+    setText('stat-prestige', String(idle.prestige));
+    setText('stat-ach', achSet.size + ' / ' + ACHIEVEMENTS.length);
+    setText('stat-surges', idleFmt(idle.surges || 0));
+    setText('stat-mult', '×' + idleGlobalMult().toFixed(2));
   }
 
   function init() {
@@ -566,6 +662,7 @@
     window.addEventListener('beforeunload', saveIdle);
     renderIdleView();
     requestAnimationFrame(idleTick);
+    scheduleSurge();   // ersten Stromstoß planen
   }
 
   document.addEventListener('DOMContentLoaded', init);

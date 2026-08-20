@@ -23,13 +23,18 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
 - **Obergrenzen fürs Balancing** — maximal **500 Einheiten je Kraftwerkstyp**
   (harte Kaufgrenze) und **max. 12 h** anrechenbare Offline-Zeit, damit der
   Fortschritt nicht davonläuft.
+- **Stromstöße** ⚡ — zufällig erscheinende goldene Blitze; anklicken bringt
+  eine Zufallsbelohnung: Energie-Windfall, **Überspannung ×7** (30 s) oder
+  **Klick-Rausch ×10** (20 s). Aktive Buffs werden mit Countdown angezeigt.
 - **18 Erfolge** — jeder freigeschaltete Erfolg gibt dauerhaft **+2 %**
   Gesamtleistung; Freischaltung wird per Toast eingeblendet
+- **Statistik-Tab** — Spielzeit, Klicks, insgesamt erzeugt, Ausbaupunkte,
+  Erfolge und gefangene Stromstöße auf einen Blick
 - **Einstellungs-Menü** (⚙️) mit Tabs **Sound** & **Cheats**:
   - Lautstärke-**Regler** für Gesamt, Effekte, Musik und Brumm (persistent)
     plus An/Aus-Schalter
   - **Cheat-Codes** (z. B. `geld`, `turbo`, `zeitraffer`, `langsam`, `ausbau`,
-    `vollausbau`) für Energie, Spieltempo u. v. m.
+    `vollausbau`, `stromstoss`) für Energie, Spieltempo u. v. m.
 - **Automatisches Speichern** im Browser (localStorage) inkl.
   **Offline-Gutschrift** (bis zu 12 h, „Willkommen zurück"-Toast)
 
