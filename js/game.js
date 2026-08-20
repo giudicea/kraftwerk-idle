@@ -7,6 +7,8 @@
   // ─── Spieldaten ───
   const IDLE_KEY = 'kraftwerk-idle';
   const IDLE_OFFLINE_CAP = 12 * 3600;  // max. 12 h Offline-Gutschrift
+  const IDLE_OFFLINE_CAP_H = IDLE_OFFLINE_CAP / 3600;
+  const MAX_PER_GEN = 500;             // harte Obergrenze je Kraftwerkstyp
   const COST_GROWTH = 1.15;
   const GENERATORS = [
     { id: 'kurbel', name: 'Handkurbel',         cost: 15,       out: 0.1  },
@@ -198,9 +200,10 @@
   function idleBuyGen(id) {
     const g = GENERATORS.find(x => x.id === id);
     const owned = idle.gens[id];
-    const n = idle.buyAmount === 'max'
+    let n = idle.buyAmount === 'max'
       ? idleMaxAffordable(g, owned, idle.energy)
       : parseInt(idle.buyAmount, 10);
+    n = Math.min(n, MAX_PER_GEN - owned);   // Obergrenze je Typ
     if (n < 1) { if (window.KraftFX) KraftFX.denied(); return; }
     const cost = idleGenCost(g, owned, n);
     if (idle.energy < cost - 1e-6) { if (window.KraftFX) KraftFX.denied(); return; }
@@ -289,18 +292,22 @@
       const revealed = owned > 0 || idle.energy >= g.cost * 0.4 || prevOwned > 0;
       if (!idleFirstRender && revealed && !idleRevealed[g.id] && window.KraftFX) KraftFX.unlock();
       idleRevealed[g.id] = revealed;
+      const atMax = owned >= MAX_PER_GEN;
       $('genrow-' + g.id).classList.toggle('idle-locked', !revealed);
-      setText('genowned-' + g.id, '×' + owned);
+      setText('genowned-' + g.id, '×' + owned + (atMax ? ' (max)' : ''));
       const mm = msMult(owned);
       const perUnit = g.out * idleGlobalMult() * mm;
       setText('genout-' + g.id,
         idleFmt(perUnit) + ' ⚡/s' +
         (owned > 0 ? '  ·  ∑ ' + idleFmt(owned * perUnit) + ' ⚡/s' : ''));
 
-      // Meilenstein-Balken + Text
+      // Meilenstein-Balken + Text (bei Maximum voll)
       const next = msNext(owned);
       const bar = $('gensbar-' + g.id);
-      if (next === null) {
+      if (atMax) {
+        if (bar) bar.style.width = '100%';
+        setText('genmstxt-' + g.id, `×${idleFmt(mm)} · Maximum (${MAX_PER_GEN})`);
+      } else if (next === null) {
         if (bar) bar.style.width = '100%';
         setText('genmstxt-' + g.id, `×${idleFmt(mm)} · alle Meilensteine`);
       } else {
@@ -312,14 +319,15 @@
           (mm > 1 ? `×${idleFmt(mm)} · ` : '') + `${owned}/${next} → ×${mmNext} (noch ${next - owned})`);
       }
 
-      const n = idle.buyAmount === 'max'
-        ? Math.max(1, idleMaxAffordable(g, owned, idle.energy))
+      let n = idle.buyAmount === 'max'
+        ? idleMaxAffordable(g, owned, idle.energy)
         : parseInt(idle.buyAmount, 10);
-      const cost = idleGenCost(g, owned, n);
-      const affordable = idle.energy >= cost - 1e-6 &&
-        (idle.buyAmount !== 'max' || idleMaxAffordable(g, owned, idle.energy) >= 1);
-      setText('genlbl-' + g.id, `Kaufen ×${n}`);
-      setText('gencost-' + g.id, idleFmt(cost) + ' ⚡');
+      n = Math.min(n, MAX_PER_GEN - owned);
+      const showN = Math.max(1, n);
+      const cost = idleGenCost(g, owned, showN);
+      const affordable = !atMax && n >= 1 && idle.energy >= cost - 1e-6;
+      setText('genlbl-' + g.id, atMax ? 'Max erreicht' : `Kaufen ×${showN}`);
+      setText('gencost-' + g.id, atMax ? '—' : idleFmt(cost) + ' ⚡');
       $('genbuy-' + g.id).disabled = !affordable;
       prevOwned = owned;
     }
@@ -377,7 +385,7 @@
     idle.lastSave = +s.lastSave || Date.now();
     idle.started = true;
     idle.clicks = +s.clicks || 0;
-    if (s.gens) GENERATORS.forEach(g => { idle.gens[g.id] = +s.gens[g.id] || 0; });
+    if (s.gens) GENERATORS.forEach(g => { idle.gens[g.id] = Math.min(MAX_PER_GEN, +s.gens[g.id] || 0); });
     // Erfolge wiederherstellen (nur bekannte IDs)
     idle.ach = [];
     achSet.clear();
@@ -386,20 +394,23 @@
       s.ach.forEach(id => { if (known.has(id) && !achSet.has(id)) { achSet.add(id); idle.ach.push(id); } });
     }
 
-    // Offline-Gutschrift
-    const elapsed = Math.min(IDLE_OFFLINE_CAP, Math.max(0, (Date.now() - idle.lastSave) / 1000));
+    // Offline-Gutschrift (auf max. IDLE_OFFLINE_CAP begrenzt)
+    const rawElapsed = Math.max(0, (Date.now() - idle.lastSave) / 1000);
+    const elapsed = Math.min(IDLE_OFFLINE_CAP, rawElapsed);
+    const capped = rawElapsed > IDLE_OFFLINE_CAP + 1;
     const gain = idlePerSecond() * elapsed;
     if (gain > 0) {
       idle.energy += gain;
       idle.total += gain;
       const dauer = elapsed < 3600 ? Math.round(elapsed / 60) + ' min' : (elapsed / 3600).toFixed(1) + ' h';
+      const maxHint = capped ? ` (max ${IDLE_OFFLINE_CAP_H} h)` : '';
       const note = $('idle-offline');
       if (note) {
-        note.textContent = `Willkommen zurück: +${idleFmt(gain)} ⚡ in ${dauer} offline`;
+        note.textContent = `Willkommen zurück: +${idleFmt(gain)} ⚡ in ${dauer} offline${maxHint}`;
         note.classList.remove('hidden');
         setTimeout(() => note.classList.add('hidden'), 8000);
       }
-      idleToast('🔌', 'Willkommen zurück!', `+${idleFmt(gain)} ⚡ in ${dauer} offline erzeugt`);
+      idleToast('🔌', 'Willkommen zurück!', `+${idleFmt(gain)} ⚡ in ${dauer} offline erzeugt${maxHint}`);
     }
 
     // Bereits erfüllte Erfolge lautlos übernehmen (z. B. alte Spielstände)

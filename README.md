@@ -20,6 +20,9 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
 - **Kraftwerks-Meilensteine** — je mehr Einheiten eines Kraftwerks du besitzt,
   desto öfter **verdoppelt sich dessen Leistung** (bei 10, 25, 50, 100, … Stück).
   Jede Zeile zeigt einen Fortschrittsbalken zum nächsten ×2-Bonus.
+- **Obergrenzen fürs Balancing** — maximal **500 Einheiten je Kraftwerkstyp**
+  (harte Kaufgrenze) und **max. 12 h** anrechenbare Offline-Zeit, damit der
+  Fortschritt nicht davonläuft.
 - **18 Erfolge** — jeder freigeschaltete Erfolg gibt dauerhaft **+2 %**
   Gesamtleistung; Freischaltung wird per Toast eingeblendet
 - **Automatisches Speichern** im Browser (localStorage) inkl.
