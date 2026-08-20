@@ -107,7 +107,7 @@
     </div>
     <div class="modal-tabs" role="tablist">
       <button class="modal-tab is-active" id="tab-sound" role="tab" aria-selected="true">🔊 Sound</button>
-      <button class="modal-tab" id="tab-cheats" role="tab" aria-selected="false">🎮 Cheats</button>
+      <button class="modal-tab" id="tab-cheats" role="tab" aria-selected="false">🎁 Codes</button>
       <button class="modal-tab" id="tab-stats" role="tab" aria-selected="false">📊 Statistik</button>
     </div>
 
@@ -125,16 +125,17 @@
       <p class="text-muted" style="font-size:11px;margin:4px 0 0">Ton startet nach dem ersten Klick ins Spiel (Browser-Regel).</p>
     </div>
 
-    <!-- Tab: Cheats -->
+    <!-- Tab: Codes (Geschenke einlösen / Cheats freischalten) -->
     <div class="modal-panel hidden" id="panel-cheats">
-      <p class="text-muted" style="font-size:12px;margin:0 0 4px">Code eingeben und mit <strong>Enter</strong> oder „Anwenden" bestätigen:</p>
+      <p class="text-muted" style="font-size:12px;margin:0 0 4px">Code eingeben und mit <strong>Enter</strong> oder „Einlösen" bestätigen. Es gibt <strong>Geschenk-Codes</strong> für Belohnungen – ein geheimer Code schaltet zusätzlich den Cheat-Modus frei.</p>
       <div class="cheat-input-row">
-        <input type="text" id="cheat-input" placeholder="z. B. geld, turbo, langsam …" autocomplete="off" spellcheck="false">
-        <button class="btn btn-secondary" id="cheat-apply">Anwenden</button>
+        <input type="text" id="cheat-input" placeholder="Code eingeben …" autocomplete="off" spellcheck="false">
+        <button class="btn btn-secondary" id="cheat-apply">Einlösen</button>
       </div>
       <div class="cheat-msg" id="cheat-msg" aria-live="polite"></div>
-      <div class="cheat-help">
-        <span class="card-kicker">Verfügbare Codes</span>
+      <div class="code-unlocked hidden" id="cheat-unlocked-badge">🔓 Cheat-Modus aktiv</div>
+      <div class="cheat-help hidden" id="cheat-help">
+        <span class="card-kicker">Cheat-Codes</span>
         <ul id="cheat-list"></ul>
       </div>
     </div>

@@ -33,8 +33,10 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
 - **Einstellungs-Menü** (⚙️) mit Tabs **Sound** & **Cheats**:
   - Lautstärke-**Regler** für Gesamt, Effekte, Musik und Brumm (persistent)
     plus An/Aus-Schalter
-  - **Cheat-Codes** (z. B. `geld`, `turbo`, `zeitraffer`, `langsam`, `ausbau`,
-    `vollausbau`, `stromstoss`) für Energie, Spieltempo u. v. m.
+  - **Code-Bereich**: **Geschenk-Codes** (einmalig) für Belohnungen; ein
+    geheimer **Freischalt-Code** aktiviert zusätzlich den Cheat-Modus
+    (Energie, Spieltempo u. v. m.). Cheat-Codes sind verborgen, bis
+    freigeschaltet.
 - **Automatisches Speichern** im Browser (localStorage) inkl.
   **Offline-Gutschrift** (bis zu 12 h, „Willkommen zurück"-Toast)
 

@@ -53,7 +53,8 @@
   const idle = {
     energy: 0, total: 0, gens: {}, clickLevel: 0, effLevel: 0,
     prestige: 0, lastSave: Date.now(), buyAmount: '1', started: false,
-    clicks: 0, ach: [], speed: 1, play: 0, surges: 0
+    clicks: 0, ach: [], speed: 1, play: 0, surges: 0,
+    cheatsUnlocked: false, redeemed: []
   };
   GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
   const achSet = new Set();
@@ -276,6 +277,7 @@
     idle.prestige = 0; idle.buyAmount = '1'; idle.started = false;
     idle.clicks = 0; idle.ach = []; achSet.clear(); idle.speed = 1;
     idle.play = 0; idle.surges = 0;
+    idle.redeemed = [];   // Freischaltung (cheatsUnlocked) bleibt bewusst erhalten
     buffProdUntil = 0; buffClickUntil = 0;
     GENERATORS.forEach(g => { idle.gens[g.id] = 0; });
     const r1 = document.querySelector('input[name="idle-buy"][value="1"]');
@@ -387,7 +389,8 @@
         clickLevel: idle.clickLevel, effLevel: idle.effLevel,
         prestige: idle.prestige, lastSave: idle.lastSave, buyAmount: idle.buyAmount,
         clicks: idle.clicks, ach: idle.ach, speed: idle.speed,
-        play: idle.play, surges: idle.surges
+        play: idle.play, surges: idle.surges,
+        cheatsUnlocked: idle.cheatsUnlocked, redeemed: idle.redeemed
       }));
     } catch (e) { /* Speicher voll o. deaktiviert */ }
   }
@@ -409,6 +412,8 @@
     idle.speed = +s.speed > 0 ? Math.min(1000, +s.speed) : 1;
     idle.play = +s.play || 0;
     idle.surges = +s.surges || 0;
+    idle.cheatsUnlocked = !!s.cheatsUnlocked;
+    idle.redeemed = Array.isArray(s.redeemed) ? s.redeemed.slice() : [];
     if (s.gens) GENERATORS.forEach(g => { idle.gens[g.id] = Math.min(MAX_PER_GEN, +s.gens[g.id] || 0); });
     // Erfolge wiederherstellen (nur bekannte IDs)
     idle.ach = [];
@@ -461,7 +466,20 @@
     requestAnimationFrame(idleTick);
   }
 
-  // ─── Cheats ───
+  // ─── Codes: Geschenk-Codes (immer, einmalig) + Cheats (nur nach Freischaltung) ───
+  // Freischalt-Code für den Cheat-Modus:
+  const UNLOCK_CODES = ['tesla', 'cheatmodus'];
+
+  // Geschenk-Codes: einmalig einlösbar, geben Belohnungen.
+  const GIFTS = [
+    { codes: ['willkommen'], desc: 'Startgeschenk',      run: () => { const a = Math.max(idlePerSecond() * 300, idleClickGain() * 100, 250); idle.energy += a; idle.total += a; return `🎁 Willkommensgeschenk: +${idleFmt(a)} ⚡`; } },
+    { codes: ['hertz'],      desc: '+2 Ausbaupunkte',     run: () => { idle.prestige += 2; return '🎁 +2 Ausbaupunkte'; } },
+    { codes: ['volt'],       desc: 'ein Stromstoß',       run: () => { setTimeout(spawnSurge, 30); return '🎁 Ein Stromstoß erscheint!'; } },
+    { codes: ['watt'],       desc: '1 Stunde Produktion', run: () => { const a = Math.max(idlePerSecond() * 3600, 500); idle.energy += a; idle.total += a; return `🎁 +${idleFmt(a)} ⚡ (1 h Produktion)`; } },
+    { codes: ['blitz'],      desc: 'Überspannung ×5 (60 s)', run: () => { buffProdMult = 5; buffProdUntil = Date.now() + 60000; return '🎁 Überspannung ×5 für 60 s'; } }
+  ];
+
+  // ─── Cheats (bleiben verborgen, bis der Freischalt-Code eingegeben wurde) ───
   const CHEATS = [
     { codes: ['geld', 'money'],          desc: 'sehr viel Energie (+1 Trilliarde ⚡)',   run: () => { idle.energy += 1e18; return '💰 Energie aufgeladen!'; } },
     { codes: ['reich'],                  desc: 'ordentlich Energie (+1 Mrd. ⚡)',        run: () => { idle.energy += 1e9;  return '💰 +1 Mrd. ⚡'; } },
@@ -477,19 +495,50 @@
     { codes: ['stromstoss', 'surge'],    desc: 'sofort einen Stromstoß erscheinen lassen', run: () => { setTimeout(spawnSurge, 30); return '⚡ Stromstoß kommt!'; } },
     { codes: ['loeschen', 'wipe'],       desc: 'Spielstand löschen (mit Rückfrage)',     run: () => { setTimeout(idleResetSave, 60); return '🗑️ Löschen…'; } }
   ];
-  function applyCheat(raw) {
-    const code = String(raw || '').trim().toLowerCase();
-    if (!code) return { ok: false, msg: 'Bitte einen Code eingeben.' };
-    const def = CHEATS.find(c => c.codes.includes(code));
-    if (!def) return { ok: false, msg: `Unbekannter Code: „${code}"` };
-    let m;
-    try { m = def.run(); } catch (e) { return { ok: false, msg: 'Fehler beim Ausführen.' }; }
+  function finalizeRedeem(m, icon, title) {
     idle.started = true;
     checkAchievements(false);
     renderIdleView();
     saveIdle();
-    idleToast('🎮', 'Cheat aktiviert', m);
-    return { ok: true, msg: m };
+    idleToast(icon || '🎁', title || 'Code eingelöst', m);
+  }
+  // Wird von setupSettings gesetzt, um die Cheat-Liste nach Freischaltung einzublenden.
+  let revealCheatUI = () => {};
+
+  function redeemCode(raw) {
+    const code = String(raw || '').trim().toLowerCase();
+    if (!code) return { ok: false, msg: 'Bitte einen Code eingeben.' };
+
+    // 1) Freischalt-Code für den Cheat-Modus
+    if (UNLOCK_CODES.includes(code)) {
+      if (idle.cheatsUnlocked) return { ok: false, msg: 'Cheat-Modus ist bereits freigeschaltet.' };
+      idle.cheatsUnlocked = true;
+      saveIdle();
+      revealCheatUI();
+      idleToast('🔓', 'Freigeschaltet', 'Cheat-Modus ist jetzt aktiv');
+      return { ok: true, msg: '🔓 Cheat-Modus freigeschaltet! Die Codes sind jetzt sichtbar.' };
+    }
+
+    // 2) Geschenk-Code (einmalig)
+    const gift = GIFTS.find(g => g.codes.includes(code));
+    if (gift) {
+      if (idle.redeemed.includes(gift.codes[0])) return { ok: false, msg: 'Diesen Code hast du bereits eingelöst.' };
+      let m; try { m = gift.run(); } catch (e) { return { ok: false, msg: 'Fehler beim Einlösen.' }; }
+      idle.redeemed.push(gift.codes[0]);
+      finalizeRedeem(m, '🎁', 'Geschenk eingelöst');
+      return { ok: true, msg: m };
+    }
+
+    // 3) Cheat-Code – nur wenn freigeschaltet
+    const cheat = CHEATS.find(c => c.codes.includes(code));
+    if (cheat) {
+      if (!idle.cheatsUnlocked) return { ok: false, msg: '🔒 Gesperrt – erst mit dem Freischalt-Code aktivieren.' };
+      let m; try { m = cheat.run(); } catch (e) { return { ok: false, msg: 'Fehler beim Ausführen.' }; }
+      finalizeRedeem(m, '🎮', 'Cheat aktiviert');
+      return { ok: true, msg: m };
+    }
+
+    return { ok: false, msg: `Unbekannter Code: „${code}"` };
   }
 
   // ─── Einstellungs-/Cheat-Modal ───
@@ -540,19 +589,25 @@
     });
     syncVolumeUI();
 
-    // Cheat-Eingabe
+    // Code-Eingabe (Geschenke + Cheat-Freischaltung)
     const input = $('cheat-input'), applyBtn = $('cheat-apply'), msg = $('cheat-msg');
+    const help = $('cheat-help'), badge = $('cheat-unlocked-badge'), list = $('cheat-list');
+    // Cheat-Liste einblenden (nur nach Freischaltung)
+    revealCheatUI = () => {
+      if (badge) badge.classList.remove('hidden');
+      if (help) help.classList.remove('hidden');
+      if (list) list.innerHTML = CHEATS.map(c => `<li><code>${c.codes[0]}</code>${c.desc}</li>`).join('');
+    };
+    if (idle.cheatsUnlocked) revealCheatUI();
+
     const doApply = () => {
-      const res = applyCheat(input ? input.value : '');
+      const res = redeemCode(input ? input.value : '');
       if (msg) { msg.textContent = res.msg; msg.className = 'cheat-msg ' + (res.ok ? 'ok' : 'bad'); }
       if (res.ok) { if (input) input.value = ''; if (window.KraftFX) KraftFX.unlock(); }
       else if (window.KraftFX) KraftFX.denied();
     };
     if (applyBtn) applyBtn.addEventListener('click', doApply);
     if (input) input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doApply(); });
-
-    const list = $('cheat-list');
-    if (list) list.innerHTML = CHEATS.map(c => `<li><code>${c.codes[0]}</code>${c.desc}</li>`).join('');
   }
 
   // ─── Stromstoß (zufälliger Klick-Bonus) ───
