@@ -18,27 +18,52 @@
 (() => {
   'use strict';
 
-  // ─── Originale SVG-Icons (24×24, stroke = currentColor) ───
-  const S = 'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"';
-  const F = 'fill="currentColor" stroke="none"';
+  // ─── Originale SVG-Icons (24×24, zweifarbig: weiche Füllung + Kontur, currentColor) ───
+  const S = 'stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+  const A = 'fill="currentColor" opacity="0.2" stroke="none"';           // weiche Fläche
+  const F = 'fill="currentColor" stroke="none"';                          // volle Fläche
   const wrap = (inner) =>
     `<svg viewBox="0 0 24 24" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
 
   const ICONS = {
-    // Handkurbel: Dynamo-Kasten mit Kurbel + Griff
-    kurbel: wrap(`<rect x="3.5" y="9" width="8.5" height="9" rx="1.6" ${S}/><path d="M6 13.5h3.5" ${S}/><path d="M12 13.5h2.6V9.6h3.4" ${S}/><circle cx="18" cy="7.8" r="1.5" ${S}/><path d="M18 6.3V4.9" ${S}/>`),
-    // Solarpanel: geneigtes Panelraster + Sonne
-    solar: wrap(`<path d="M4 19l3-8h9l3 8z" ${S}/><path d="M6 15h12M11 11v8M15 11l-1.5 8" ${S}/><circle cx="18" cy="5.5" r="2" ${S}/><path d="M18 2.4v.8M20.8 5.5h.8M18 8.6v-.8M15.2 5.5h.8" ${S}/>`),
-    // Windrad: Turm + 3-Flügel-Stern (ein Flügel, 3× rotiert)
-    wind: wrap(`<path d="M11.4 10.5L11 20h2l-.4-9.5z" ${F}/><path d="M9.8 20h4.4" ${S}/><g ${F}><path d="M12 9.5C11 7 11.2 4.6 12 2.8 12.8 4.6 13 7 12 9.5z"/><path d="M12 9.5C11 7 11.2 4.6 12 2.8 12.8 4.6 13 7 12 9.5z" transform="rotate(120 12 9.5)"/><path d="M12 9.5C11 7 11.2 4.6 12 2.8 12.8 4.6 13 7 12 9.5z" transform="rotate(240 12 9.5)"/></g><circle cx="12" cy="9.5" r="1.4" ${F}/>`),
+    // Handkurbel: Dynamo mit Spule + Kurbel
+    kurbel: wrap(
+      `<rect x="3" y="9" width="9" height="9.5" rx="2" ${A}/><rect x="3" y="9" width="9" height="9.5" rx="2" ${S}/>` +
+      `<path d="M5.5 12h4M5.5 15h4" ${S}/>` +
+      `<path d="M12 13.5h3V9.4h3" ${S}/>` +
+      `<circle cx="18" cy="7.5" r="1.7" ${A}/><circle cx="18" cy="7.5" r="1.7" ${S}/><path d="M18 5.8V4.5" ${S}/>`),
+    // Solarpanel: Sonne + geneigtes Panelraster
+    solar: wrap(
+      `<circle cx="18" cy="5.4" r="2.3" ${A}/><circle cx="18" cy="5.4" r="2.3" ${S}/>` +
+      `<path d="M18 1.8v1M18 8v1M14.5 5.4h1M20.5 5.4h1M15.5 2.9l.7.7M20.5 7.3l-.7-.7" ${S}/>` +
+      `<path d="M4 19l2.7-8h8.6l2.7 8z" ${A}/><path d="M4 19l2.7-8h8.6l2.7 8z" ${S}/>` +
+      `<path d="M5.6 15h12.8M10.8 11v8M14.2 11l-1 8" ${S}/>`),
+    // Windrad: Turm + 3 Rotorblätter
+    wind: wrap(
+      `<path d="M11.3 10.5 11 20.5h2l-.3-10z" ${A}/><path d="M11.3 10.5 11 20.5h2l-.3-10z" ${S}/><path d="M9.6 20.5h4.8" ${S}/>` +
+      `<g ${A}><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(120 12 9.6)"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(240 12 9.6)"/></g>` +
+      `<g ${S}><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(120 12 9.6)"/><path d="M12 9.6C11 7.2 11.2 4.8 12 3.1 12.8 4.8 13 7.2 12 9.6z" transform="rotate(240 12 9.6)"/></g>` +
+      `<circle cx="12" cy="9.6" r="1.3" ${F}/>`),
     // Wasserkraft: Staumauer + Wellen
-    wasser: wrap(`<path d="M5 5v9M9 5v9M13 5v9M17 5v9" ${S}/><path d="M4 14h16" ${S}/><path d="M4 18c1.6-1.4 3.2-1.4 4 0s2.4 1.4 4 0 3.2-1.4 4 0 2.4 1.4 4 0" ${S}/>`),
-    // BHKW: Motorblock mit Kolben + Flamme (Wärme)
-    bhkw: wrap(`<rect x="3.5" y="10" width="10" height="8" rx="1.6" ${S}/><path d="M6 10V7.4M8.5 10V7.4M11 10V7.4" ${S}/><path d="M6 14.5h5" ${S}/><path d="M18.4 17.5c-1.7 0-2.9-1.3-2.9-2.9 0-1.5 1.2-2.3 1.5-3.6.7 1.2 1.1 1.6 1.9 2.4.7.8 1.1 1.6 1.1 2.6 0 .9-.7 1.5-1.6 1.5z" ${F}/>`),
+    wasser: wrap(
+      `<path d="M5 6h14v8H5z" ${A}/><path d="M5 6h14v8H5z" ${S}/><path d="M9 6v8M13 6v8" ${S}/>` +
+      `<path d="M4 17c1.4-1.3 2.8-1.3 4 0s2.6 1.3 4 0 2.8-1.3 4 0 2.6 1.3 4 0" ${S}/>` +
+      `<path d="M4 20c1.4-1.3 2.8-1.3 4 0s2.6 1.3 4 0 2.8-1.3 4 0 2.6 1.3 4 0" ${S}/>`),
+    // BHKW: Motorblock + Flamme (Kraft-Wärme-Kopplung)
+    bhkw: wrap(
+      `<rect x="3" y="10" width="10.5" height="8.5" rx="2" ${A}/><rect x="3" y="10" width="10.5" height="8.5" rx="2" ${S}/>` +
+      `<path d="M5.6 10V7.3M8.2 10V7.3M10.8 10V7.3" ${S}/><path d="M5.6 14.6h5.3" ${S}/>` +
+      `<path d="M18.4 18c-1.8 0-3.1-1.4-3.1-3.1 0-1.6 1.3-2.5 1.6-3.9.8 1.3 1.2 1.7 2 2.6.8.8 1.2 1.7 1.2 2.8 0 1-.8 1.6-1.7 1.6z" ${F}/>`),
     // Kernkraft: Kühlturm + Dampf
-    kern: wrap(`<path d="M8 6c-1 4.6-1.2 9.3-1.6 13h11.2c-.4-3.7-.6-8.4-1.6-13z" ${S}/><path d="M8 6h8" ${S}/><path d="M7 15.5c2.4-1.1 7.6-1.1 10 0" ${S}/><path d="M9 4.3c.2-1.1 1.6-1.3 2.2-.5.5-1 2.3-.8 2.4.5.9-.1 1.4.8 1 1.6H8.6c-.4-.8 0-1.6.9-1.6z" ${F}/>`),
-    // Fusion: Atom mit Orbits
-    fusion: wrap(`<circle cx="12" cy="12" r="1.6" ${F}/><ellipse cx="12" cy="12" rx="8.5" ry="3.4" ${S}/><ellipse cx="12" cy="12" rx="8.5" ry="3.4" transform="rotate(60 12 12)" ${S}/><ellipse cx="12" cy="12" rx="8.5" ry="3.4" transform="rotate(120 12 12)" ${S}/>`)
+    kern: wrap(
+      `<path d="M8 6c-1 4.6-1.2 9.4-1.6 13h11.2c-.4-3.6-.6-8.4-1.6-13z" ${A}/>` +
+      `<path d="M8 6c-1 4.6-1.2 9.4-1.6 13h11.2c-.4-3.6-.6-8.4-1.6-13z" ${S}/><path d="M8 6h8" ${S}/><path d="M7 15c2.4-1.1 7.6-1.1 10 0" ${S}/>` +
+      `<path d="M9 4.2c.2-1.1 1.6-1.3 2.2-.5.5-1 2.3-.8 2.4.5.9-.1 1.4.8 1 1.6H8.6c-.4-.8 0-1.6.9-1.6z" ${A}/>`),
+    // Fusion: Atom mit Orbits + leuchtendem Kern
+    fusion: wrap(
+      `<circle cx="12" cy="12" r="3.2" ${A}/>` +
+      `<ellipse cx="12" cy="12" rx="8.6" ry="3.4" ${S}/><ellipse cx="12" cy="12" rx="8.6" ry="3.4" transform="rotate(60 12 12)" ${S}/><ellipse cx="12" cy="12" rx="8.6" ry="3.4" transform="rotate(120 12 12)" ${S}/>` +
+      `<circle cx="12" cy="12" r="1.8" ${F}/><circle cx="20.4" cy="12" r="1" ${F}/><circle cx="7.8" cy="4.7" r="1" ${F}/>`)
   };
 
   function icon(id) { return ICONS[id] || ''; }
