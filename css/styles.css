@@ -131,3 +131,67 @@ a:hover { color: var(--color-accent-300); }
 .idle-locked { opacity: 0.55; filter: grayscale(0.4); }
 .idle-pulse { animation: idle-pulse 0.25s ease; }
 @keyframes idle-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
+
+/* ─── fx.js: Icons, Blitz-Effekt, Sound-Schalter ─── */
+.idle-row-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; width: 34px; height: 34px; margin-right: 10px;
+  color: var(--color-accent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+.idle-locked .idle-row-icon { color: var(--color-neutral-500); background: color-mix(in srgb, var(--color-text) 4%, transparent); box-shadow: none; }
+
+.kraft-burst {
+  position: fixed; z-index: 60; pointer-events: none;
+  transform: translate(-50%, -50%);
+  color: var(--color-accent);
+  animation: kraft-burst 0.5s ease-out forwards;
+}
+@keyframes kraft-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-8deg); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(4deg); }
+  100% { opacity: 0; transform: translate(-50%, -70%) scale(0.9) rotate(0deg); }
+}
+
+.fx-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+  background: var(--color-surface); color: var(--color-text);
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 12px; padding: 6px 10px; cursor: pointer; line-height: 1;
+}
+.fx-toggle:hover { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.fx-toggle[aria-pressed="false"] { opacity: 0.55; }
+.fx-toggle-group { display: inline-flex; gap: 8px; align-items: center; }
+
+/* ─── fx.js: animierter Energie-Hintergrund ─── */
+.fx-bg {
+  position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background:
+    radial-gradient(1200px 600px at 78% -10%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 10% 110%, color-mix(in srgb, var(--color-accent-2) 9%, transparent), transparent 55%);
+}
+.fx-dot {
+  position: absolute; width: 3px; height: 3px; border-radius: 50%;
+  background: var(--color-accent); opacity: 0.35;
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--color-accent) 70%, transparent);
+  animation: fx-drift linear infinite;
+}
+.fx-dot:nth-child(1) { left: 12%; animation-duration: 20s; animation-delay: -2s; }
+.fx-dot:nth-child(2) { left: 24%; animation-duration: 27s; animation-delay: -9s; }
+.fx-dot:nth-child(3) { left: 38%; animation-duration: 23s; animation-delay: -5s; }
+.fx-dot:nth-child(4) { left: 50%; animation-duration: 31s; animation-delay: -14s; }
+.fx-dot:nth-child(5) { left: 63%; animation-duration: 22s; animation-delay: -7s; }
+.fx-dot:nth-child(6) { left: 71%; animation-duration: 29s; animation-delay: -18s; }
+.fx-dot:nth-child(7) { left: 82%; animation-duration: 25s; animation-delay: -3s; }
+.fx-dot:nth-child(8) { left: 90%; animation-duration: 33s; animation-delay: -11s; }
+.fx-dot:nth-child(9) { left: 6%;  animation-duration: 28s; animation-delay: -16s; }
+@keyframes fx-drift {
+  0%   { transform: translateY(105vh) scale(0.6); opacity: 0; }
+  10%  { opacity: 0.4; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-5vh) scale(1.1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .fx-dot { animation: none; display: none; } }

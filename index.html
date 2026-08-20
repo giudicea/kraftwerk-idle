@@ -6,8 +6,14 @@
 <title>Kraftwerk — Idle Game</title>
 <meta name="description" content="Ein Strom-Idle-Game: klicke, baue Kraftwerke von der Handkurbel bis zum Fusionsreaktor und baue dein Netz aus.">
 <link rel="stylesheet" href="css/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Crect width='256' height='256' rx='48' fill='%23161826'/%3E%3Cpath fill='%239184d9' d='M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-88,120a8,8,0,0,0,3,11.69l57.63,21.61L112.16,237.43a8,8,0,0,0,13.69,7l88-120A8,8,0,0,0,215.79,118.17Z'/%3E%3C/svg%3E">
 </head>
 <body>
+<div class="fx-bg" aria-hidden="true">
+  <span class="fx-dot"></span><span class="fx-dot"></span><span class="fx-dot"></span>
+  <span class="fx-dot"></span><span class="fx-dot"></span><span class="fx-dot"></span>
+  <span class="fx-dot"></span><span class="fx-dot"></span><span class="fx-dot"></span>
+</div>
 <div class="page">
 
   <header class="topbar">
@@ -16,6 +22,11 @@
       Kraftwerk
     </span>
     <span class="text-muted" style="font-size:12px">Idle-Game · Strom erzeugen</span>
+    <span class="fx-toggle-group">
+      <button class="fx-toggle" id="fx-sound" aria-pressed="true" title="Soundeffekte an/aus">🔊 Sound</button>
+      <button class="fx-toggle" id="fx-music" aria-pressed="false" title="Musik an/aus">♫ Musik</button>
+      <button class="fx-toggle" id="fx-hum" aria-pressed="false" title="Strom-Brumm an/aus">〜 Brumm</button>
+    </span>
   </header>
 
   <main class="game">
@@ -81,6 +92,7 @@
   </footer>
 
 </div>
+<script src="js/fx.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>

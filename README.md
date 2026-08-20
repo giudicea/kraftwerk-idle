@@ -39,6 +39,7 @@ python3 -m http.server
 | `index.html` | Spiel-Oberfläche |
 | `css/styles.css` | Design-Tokens & Komponenten (Nocturne-Theme) |
 | `js/game.js` | gesamte Spiellogik |
+| `js/fx.js` | Grafik & Sound: originale SVG-Icons, Web-Audio-Klänge, Musik-Loop |
 
 ## Herkunft
 

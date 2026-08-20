@@ -67,11 +67,14 @@
 
   // ─── DOM einmalig aufbauen ───
   let idleBuilt = false;
+  let idleFirstRender = true;
+  const idleRevealed = {};
   function buildIdle() {
     if (idleBuilt) return;
     const gc = $('idle-generators');
     gc.innerHTML = GENERATORS.map(g => `
       <div class="idle-row idle-locked" id="genrow-${g.id}">
+        <span class="idle-row-icon">${window.KraftFX ? KraftFX.icon(g.id) : ''}</span>
         <div class="idle-row-info">
           <div class="idle-row-title">
             <span class="idle-row-name">${g.name}</span>
@@ -113,12 +116,13 @@
     const n = idle.buyAmount === 'max'
       ? idleMaxAffordable(g, owned, idle.energy)
       : parseInt(idle.buyAmount, 10);
-    if (n < 1) return;
+    if (n < 1) { if (window.KraftFX) KraftFX.denied(); return; }
     const cost = idleGenCost(g, owned, n);
-    if (idle.energy < cost - 1e-6) return;
+    if (idle.energy < cost - 1e-6) { if (window.KraftFX) KraftFX.denied(); return; }
     idle.energy -= cost;
     idle.gens[id] += n;
     idle.started = true;
+    if (window.KraftFX) KraftFX.buy();
     const btn = $('genbuy-' + id);
     btn.classList.remove('idle-pulse');
     void btn.offsetWidth;
@@ -133,6 +137,7 @@
     if (idle.energy < cost - 1e-6) return;
     idle.energy -= cost;
     if (id === 'click') idle.clickLevel++; else idle.effLevel++;
+    if (window.KraftFX) KraftFX.upgrade();
     renderIdleView();
     saveIdle();
   }
@@ -141,6 +146,7 @@
     const gain = idlePrestigeGain();
     if (gain < 1) return;
     if (!window.confirm(`Netzausbau: +${gain} Ausbaupunkt(e) für dauerhaft +${(gain * 2)} % Leistung.\nEnergie, Kraftwerke und Upgrades werden zurückgesetzt. Fortfahren?`)) return;
+    if (window.KraftFX) KraftFX.prestige();
     idle.prestige += gain;
     idle.energy = 0;
     idle.clickLevel = 0;
@@ -150,11 +156,18 @@
     saveIdle();
   }
 
-  function idleClick() {
+  function idleClick(e) {
     const gain = idleClickGain();
     idle.energy += gain;
     idle.total += gain;
     idle.started = true;
+    if (window.KraftFX) {
+      KraftFX.zap(gain);
+      let x = window.innerWidth / 2, y = window.innerHeight / 2;
+      if (e && typeof e.clientX === 'number' && (e.clientX || e.clientY)) { x = e.clientX; y = e.clientY; }
+      else { const b = $('idle-click'); if (b) { const r = b.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; } }
+      KraftFX.burst(x, y);
+    }
     renderIdleView();
   }
 
@@ -183,6 +196,8 @@
     for (const g of GENERATORS) {
       const owned = idle.gens[g.id];
       const revealed = owned > 0 || idle.energy >= g.cost * 0.4 || prevOwned > 0;
+      if (!idleFirstRender && revealed && !idleRevealed[g.id] && window.KraftFX) KraftFX.unlock();
+      idleRevealed[g.id] = revealed;
       $('genrow-' + g.id).classList.toggle('idle-locked', !revealed);
       setText('genowned-' + g.id, '×' + owned);
       setText('genout-' + g.id,
@@ -213,6 +228,7 @@
     setText('idle-prestige-gain', '+' + pg);
     setText('idle-prestige-have', idle.prestige);
     $('idle-prestige').disabled = pg < 1;
+    idleFirstRender = false;
   }
 
   // ─── Speichern / Laden ───
@@ -283,6 +299,27 @@
       el.checked = el.value === idle.buyAmount;
       el.addEventListener('change', (e) => { idle.buyAmount = e.target.value; renderIdleView(); saveIdle(); });
     });
+    // ── fx.js: Sound-/Brumm-Schalter ──
+    if (window.KraftFX) {
+      const sBtn = $('fx-sound'), hBtn = $('fx-hum'), mBtn = $('fx-music');
+      const syncSound = () => { if (sBtn) { sBtn.setAttribute('aria-pressed', String(!KraftFX.isMuted())); sBtn.textContent = (KraftFX.isMuted() ? '🔇' : '🔊') + ' Sound'; } };
+      const syncHum = () => { if (hBtn) hBtn.setAttribute('aria-pressed', String(KraftFX.humOn())); };
+      const syncMusic = () => { if (mBtn) mBtn.setAttribute('aria-pressed', String(KraftFX.musicOn())); };
+      syncSound(); syncHum(); syncMusic();
+      if (sBtn) sBtn.addEventListener('click', () => { KraftFX.toggleMute(); syncSound(); syncHum(); syncMusic(); });
+      if (hBtn) hBtn.addEventListener('click', () => { KraftFX.toggleHum(); syncHum(); });
+      if (mBtn) mBtn.addEventListener('click', () => { KraftFX.toggleMusic(); syncMusic(); });
+      // AudioContext darf erst nach einer Nutzer-Geste starten -> gespeicherte Loops dann wiederherstellen
+      const kick = () => {
+        if (!KraftFX.isMuted()) {
+          if (KraftFX._restoreHum() && !KraftFX.humOn()) { KraftFX.toggleHum(); syncHum(); }
+          if (KraftFX._restoreMusic() && !KraftFX.musicOn()) { KraftFX.toggleMusic(); syncMusic(); }
+        }
+        window.removeEventListener('pointerdown', kick);
+      };
+      window.addEventListener('pointerdown', kick, { once: true });
+    }
+
     document.addEventListener('visibilitychange', () => { if (document.hidden) saveIdle(); });
     window.addEventListener('beforeunload', saveIdle);
     renderIdleView();
