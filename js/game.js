@@ -9,6 +9,7 @@
   const IDLE_OFFLINE_CAP = 12 * 3600;  // max. 12 h Offline-Gutschrift
   const IDLE_OFFLINE_CAP_H = IDLE_OFFLINE_CAP / 3600;
   const MAX_PER_GEN = 500;             // harte Obergrenze je Kraftwerkstyp
+  const GAME_PACE = 0.7;               // <1 = langsameres Tempo (Einnahmen gedrosselt)
   const COST_GROWTH = 1.15;
   const GENERATORS = [
     { id: 'kurbel', name: 'Handkurbel',         cost: 15,       out: 0.1  },
@@ -90,9 +91,9 @@
   function idlePerSecond() {
     let base = 0;
     for (const g of GENERATORS) base += idle.gens[g.id] * g.out * msMult(idle.gens[g.id]);
-    return base * idleGlobalMult();
+    return base * idleGlobalMult() * GAME_PACE;
   }
-  function idleClickGain() { return ((1 + idle.clickLevel) * idleGlobalMult() + 0.05 * idlePerSecond()) * buffClick(); }
+  function idleClickGain() { return ((1 + idle.clickLevel) * idleGlobalMult() * GAME_PACE + 0.05 * idlePerSecond()) * buffClick(); }
   function idlePrestigePotential() { return Math.floor(Math.sqrt(idle.total / 1e6)); }
   function idlePrestigeGain() { return Math.max(0, idlePrestigePotential() - idle.prestige); }
 
