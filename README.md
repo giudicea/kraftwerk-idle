@@ -40,6 +40,24 @@ Reines statisches HTML/CSS/JS — **kein Build-Schritt nötig**. Einfach
 - **Automatisches Speichern** im Browser (localStorage) inkl.
   **Offline-Gutschrift** (bis zu 12 h, „Willkommen zurück"-Toast)
 
+## Bonus: 🏎️ KI-Rennen (`rennen/`)
+
+Ein kleines Rennspiel, in dem **neuronale Netze per Neuroevolution** fahren
+lernen. Jedes der 60 Autos hat ein eigenes Netz (8 → 10 → 6 → 2, tanh):
+
+- **Eingaben:** 7 Abstands-Sensoren (Strahlen von −90° bis +90°) + Tempo
+- **Ausgaben:** Lenkung und Gas/Bremse
+- **Lernen:** Wer die Wand berührt oder nicht vorankommt, scheidet aus. Nach
+  jeder Generation werden die besten Fahrer (Elite + Turnier-Auswahl)
+  gekreuzt und mutiert. Meist schaffen sie nach ~5–10 Generationen alle 3 Runden.
+- Live-Ansicht des **Netzes** des führenden Autos, Fitness-Verlauf, Tempo-
+  und Mutations-Regler, zufällige Strecken, Speichern/Laden des besten Netzes
+- **🏁 Gegen die KI fahren** — mit Pfeiltasten/WASD (oder Touch-Tasten) gegen
+  das beste trainierte Netz antreten
+
+Erreichbar über den Button „🏎️ KI-Rennen" oben im Spiel oder direkt unter
+`rennen/index.html`.
+
 ## Lokal spielen
 
 ```
@@ -60,6 +78,9 @@ python3 -m http.server
 | `css/styles.css` | Design-Tokens & Komponenten (Nocturne-Theme) |
 | `js/game.js` | gesamte Spiellogik |
 | `js/fx.js` | Grafik & Sound: originale SVG-Icons, Web-Audio-Klänge, Musik-Loop |
+| `rennen/nn.js` | KI-Rennen: neuronales Netz (Feed-Forward, Mutation, Crossover) |
+| `rennen/sim.js` | KI-Rennen: Strecke, Physik, Sensoren, Evolution (auch in Node lauffähig) |
+| `rennen/rennen.js` | KI-Rennen: Grafik, Bedienung, Rennen gegen die KI |
 
 ## Herkunft
 
